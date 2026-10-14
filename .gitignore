@@ -1,0 +1,3 @@
+tests/out/
+config.json
+__pycache__/

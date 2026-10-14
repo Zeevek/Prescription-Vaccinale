@@ -1,0 +1,2168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prescription vaccinale</title>
+<meta name="description" content="Aide à la prescription vaccinale par le pharmacien d'officine et génération de l'ordonnance — calendrier des vaccinations 2026">
+<meta name="theme-color" content="#0f6b55">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#f4f6f5; --surface:#ffffff; --surface-2:#f8faf9; --ink:#17221e; --ink-2:#4b5a54; --ink-3:#7a8a83;
+  --line:#dde4e1; --line-2:#c9d3cf; --accent:#0f6b55; --accent-2:#0b5544; --accent-soft:#e3f1ec;
+  --ok:#1e7a4c; --ok-soft:#e5f4ec; --info:#2457a6; --info-soft:#e8eef9; --warn:#9a5b00; --warn-soft:#fdf1dc;
+  --danger:#b3261e; --danger-soft:#fbe9e7; --muted-soft:#eef1f0; --violet:#6a3fa0; --violet-soft:#f1eaf8;
+  --r:10px; --r-sm:7px; --shadow:0 1px 2px rgba(16,32,26,.06),0 2px 8px rgba(16,32,26,.05);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- barre supérieure */
+.top{position:sticky;top:0;z-index:20;background:var(--accent);color:#fff;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.top-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:.1px;margin-right:auto}
+.brand svg{flex:none}
+.brand small{display:block;font-weight:400;opacity:.8;font-size:12px}
+.top select{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:var(--r-sm);padding:6px 8px;max-width:260px}
+.top select option{color:#111}
+.tbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:var(--r-sm);padding:6px 11px;cursor:pointer;white-space:nowrap}
+.tbtn:hover{background:rgba(255,255,255,.22)}
+
+/* ---------- étapes */
+.steps{max-width:1180px;margin:14px auto 0;padding:0 16px;display:flex;gap:6px;overflow-x:auto}
+.step{flex:1 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px 7px 7px;cursor:pointer;color:var(--ink-2);white-space:nowrap}
+.step .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--muted-soft);font-size:13px;font-weight:650;color:var(--ink-2)}
+.step[aria-current="step"]{border-color:var(--accent);color:var(--accent-2);background:var(--accent-soft)}
+.step[aria-current="step"] .n{background:var(--accent);color:#fff}
+.step.done .n{background:var(--ok);color:#fff}
+.step .cnt{font-size:12px;background:var(--accent);color:#fff;border-radius:999px;padding:0 7px}
+
+main{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
+.panel{display:none}
+.panel.on{display:block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.card h2 .tag{font-size:12px;font-weight:500;color:var(--ink-3)}
+.card h3{font-size:14px;margin:14px 0 8px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.4px}
+.lead{color:var(--ink-2);margin:0 0 12px}
+.grid{display:grid;gap:12px 16px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.grid.g2{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f>label,.lab{font-size:13px;color:var(--ink-2);font-weight:550}
+.req::after{content:" *";color:var(--danger)}
+.f input,.f select,.f textarea,.inp{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:7px 9px;background:#fff;min-width:0;width:100%}
+.f input:focus,.f select:focus,.f textarea:focus,.inp:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.f .hint{font-size:12px;color:var(--ink-3)}
+.f.inline{flex-direction:row;align-items:center;gap:8px}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:5px 0;cursor:pointer;line-height:1.3}
+.chk input{margin-top:2px;flex:none;width:16px;height:16px;accent-color:var(--accent)}
+.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 18px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+
+/* questions oui/non */
+.q{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.q .qt{flex:1;min-width:0}
+.q .qt small{display:block;color:var(--ink-3);font-size:12.5px}
+.yn{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--r-sm);overflow:hidden;flex:none}
+.yn button{border:0;background:#fff;padding:6px 14px;cursor:pointer;color:var(--ink-2)}
+.yn button+button{border-left:1px solid var(--line-2)}
+.yn button[aria-pressed="true"][data-v="1"]{background:var(--warn-soft);color:var(--warn);font-weight:650}
+.yn button[aria-pressed="true"][data-v="0"]{background:var(--ok-soft);color:var(--ok);font-weight:650}
+.yn.missing{outline:2px solid var(--danger);outline-offset:1px}
+.sub{margin:4px 0 6px 0;padding:10px 12px;background:var(--surface-2);border:1px dashed var(--line-2);border-radius:var(--r-sm)}
+
+.btn{border:1px solid var(--line-2);background:#fff;border-radius:var(--r-sm);padding:8px 14px;cursor:pointer;font-weight:550;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--accent);color:var(--accent-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent-2);color:#fff}
+.btn.danger{color:var(--danger);border-color:#e6b8b3}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.nav{display:flex;gap:10px;justify-content:space-between;margin-top:6px}
+
+/* recommandations */
+.globals{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.msg{border-radius:var(--r-sm);padding:9px 12px;border:1px solid}
+.msg.info{background:var(--info-soft);border-color:#c9d6f0;color:#1d3f78}
+.msg.alerte{background:var(--warn-soft);border-color:#f0d5a6;color:#6e4100}
+.msg.bloquant{background:var(--danger-soft);border-color:#f1c2bd;color:#8a1c15}
+.msg.ok{background:var(--ok-soft);border-color:#bfe3cf;color:#145a37}
+.reco{display:grid;gap:12px}
+.rc{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--line-2);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow)}
+.rc[data-s="recommande"]{border-left-color:var(--ok)}
+.rc[data-s="propose"]{border-left-color:var(--info)}
+.rc[data-s="differer"]{border-left-color:var(--warn)}
+.rc[data-s="orienter"]{border-left-color:var(--violet)}
+.rc[data-s="ci"]{border-left-color:var(--danger)}
+.rc[data-s="en_cours"]{border-left-color:#7d8f87}
+.rc-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rc-h b{font-size:15px}
+.chip{font-size:12px;font-weight:650;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.chip.recommande{background:var(--ok-soft);color:var(--ok)}
+.chip.propose{background:var(--info-soft);color:var(--info)}
+.chip.differer{background:var(--warn-soft);color:var(--warn)}
+.chip.orienter{background:var(--violet-soft);color:var(--violet)}
+.chip.ci{background:var(--danger-soft);color:var(--danger)}
+.chip.en_cours,.chip.a_jour,.chip.non_indique{background:var(--muted-soft);color:var(--ink-2)}
+.rc ul{margin:6px 0 0;padding-left:18px}
+.rc li{margin:2px 0}
+.rc .al{color:#6e4100}
+.rc .meta{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-top:8px}
+.rc .meta b{color:var(--ink)}
+.rc .presc{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr 120px 1fr;gap:8px 12px;align-items:end}
+.rc .presc .f{min-width:0}
+.rc .excl{font-size:12px;color:var(--ink-3);margin-top:6px}
+.rc details{margin-top:6px}
+.rc summary{cursor:pointer;color:var(--ink-3);font-size:13px}
+.toggle{display:flex;align-items:center;gap:8px;font-weight:650;cursor:pointer;padding-bottom:6px}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+.group-title{font-size:13px;font-weight:650;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 8px}
+.folded{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;font-size:13.5px}
+.mini b{display:block;font-size:14px}
+.mini .chip{float:right;margin-left:6px}
+.mini p{margin:4px 0 0;color:var(--ink-2)}
+
+/* aperçu des documents */
+.preview{background:#e9edeb;border-radius:var(--r);padding:18px;overflow:auto}
+.preview .doc{margin:0 auto 18px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.checklist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.checklist li{display:flex;gap:8px;align-items:flex-start}
+.checklist .ic{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.checklist .okk .ic{background:var(--ok)}
+.checklist .ko .ic{background:var(--danger)}
+.checklist .ko{color:#8a1c15}
+.adm{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;background:var(--surface-2)}
+.adm h4{margin:0 0 8px;font-size:15px}
+.err{color:var(--danger);font-size:12.5px}
+.badge{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:999px;background:var(--muted-soft);color:var(--ink-2)}
+.copyarea{width:100%;min-height:180px;font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--ink-2)}
+.kv dd{margin:0}
+
+/* modale d'administration */
+dialog{border:0;border-radius:var(--r);padding:0;max-width:980px;width:calc(100% - 24px);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,20,16,.45)}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.dlg-h h2{margin:0;font-size:17px;flex:1}
+.dlg-b{padding:16px 18px;max-height:72vh;overflow:auto}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;padding:8px 12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--ink-2)}
+.tab[aria-selected="true"]{border-bottom-color:var(--accent);color:var(--accent-2);font-weight:650}
+.tpanel{display:none}.tpanel.on{display:block}
+table.t{border-collapse:collapse;width:100%;font-size:13.5px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#17221e;color:#fff;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.foot{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--ink-3);font-size:12.5px}
+
+@media (max-width:760px){
+  .rc .presc{grid-template-columns:1fr}
+  .step .lbl{display:none}
+  .q{flex-wrap:wrap}
+}
+
+/* ---------- documents imprimables */
+.doc{background:#fff;color:#000;width:210mm;min-height:280mm;padding:14mm 15mm 12mm;font:10.5pt/1.38 "Helvetica Neue",Arial,sans-serif;position:relative}
+.doc .dh{display:flex;justify-content:space-between;gap:12mm;border-bottom:1.5pt solid #000;padding-bottom:4mm}
+.doc .dh .off{display:flex;gap:4mm;align-items:flex-start}
+.doc .dh img{max-height:20mm;max-width:32mm}
+.doc .dh .off b{font-size:12.5pt}
+.doc .dh .pr{text-align:right}
+.doc h1{font-size:14pt;text-align:center;margin:7mm 0 2mm;letter-spacing:.3pt}
+.doc .sub1{text-align:center;font-size:9pt;margin:0 0 6mm;color:#333}
+.doc .lieu{text-align:right;margin:0 0 5mm}
+.doc .pat{border:1pt solid #000;padding:3mm 4mm;margin-bottom:5mm}
+.doc .pat .am{font-size:9pt;margin-top:1.5mm}
+.doc ol.lines{margin:0 0 5mm;padding-left:6mm}
+.doc ol.lines li{margin-bottom:4mm;padding-left:1mm}
+.doc ol.lines .dc{font-weight:700;text-transform:uppercase;font-size:10pt}
+.doc ol.lines .sp{font-weight:700}
+.doc .legal{font-size:8.6pt;color:#222;border-top:.6pt solid #888;padding-top:2.5mm;margin-top:5mm}
+.doc .sign{display:flex;justify-content:flex-end;margin-top:7mm}
+.doc .sign div{width:75mm;border:.8pt solid #000;height:28mm;padding:2mm 3mm;font-size:9pt}
+.doc .dfoot{position:absolute;left:15mm;right:15mm;bottom:8mm;border-top:.6pt solid #000;padding-top:1.5mm;font-size:8.2pt;display:flex;justify-content:space-between}
+.doc table.dt{border-collapse:collapse;width:100%;margin:2mm 0 5mm;font-size:10pt}
+.doc table.dt th,.doc table.dt td{border:.6pt solid #000;padding:1.6mm 2.2mm;text-align:left;vertical-align:top}
+.doc table.dt th{background:#eee;width:42%}
+.doc table.dt th.c{width:auto}
+.doc .box{border:.8pt solid #000;padding:2.5mm 3.5mm;margin:3mm 0}
+.doc .qa{display:grid;grid-template-columns:1fr 14mm 1fr 14mm;gap:0;border:.6pt solid #000;margin:1mm 0 4mm}
+.doc .qa div{border-bottom:.4pt solid #999;padding:1.2mm 2mm;font-size:9.5pt}
+.doc .qa div:nth-child(2n){text-align:center;font-weight:700;border-left:.4pt solid #999}
+.doc h2{font-size:11pt;margin:4mm 0 1.5mm;border-bottom:.6pt solid #000;padding-bottom:.8mm}
+.doc .small{font-size:9pt}
+.doc.flow{min-height:0;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.doc.flow .dfoot{position:static;margin-top:6mm}
+.doc.flow table.dt{font-size:8.8pt}
+.doc.flow table.dt td,.doc.flow table.dt th{padding:1mm 1.8mm}
+.doc .cb::before{content:"☐ ";}
+.doc .cb.x::before{content:"☒ ";}
+
+#print-root{display:none}
+@page{size:A4;margin:0}
+@media print{
+  html,body{background:#fff}
+  #print-root .doc.flow{min-height:0!important}
+  body>*:not(#print-root){display:none!important}
+  #print-root{display:block}
+  #print-root .doc{box-shadow:none;margin:0;page-break-after:always;break-after:page;min-height:296mm}
+  #print-root .doc:last-child{page-break-after:auto;break-after:auto}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#fff" fill-opacity=".16"/><path d="M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7z" fill="#fff"/></svg>
+      <div>Prescription vaccinale<small id="hdr-off">Officine non paramétrée</small></div>
+    </div>
+    <label class="sr" for="hdr-pharm">Pharmacien</label>
+    <select id="hdr-pharm" title="Pharmacien prescripteur et vaccinateur"></select>
+    <button class="tbtn" id="btn-new" type="button" title="Effacer la saisie et commencer un nouveau patient">Nouveau patient</button>
+    <button class="tbtn" id="btn-admin" type="button">Paramètres</button>
+  </div>
+</header>
+
+<nav class="steps" id="steps" aria-label="Étapes">
+  <button class="step" data-step="1" type="button"><span class="n">1</span><span class="lbl">Patient</span></button>
+  <button class="step" data-step="2" type="button"><span class="n">2</span><span class="lbl">Entretien pré-vaccinal</span></button>
+  <button class="step" data-step="3" type="button"><span class="n">3</span><span class="lbl">Profil &amp; antécédents</span></button>
+  <button class="step" data-step="4" type="button"><span class="n">4</span><span class="lbl">Recommandations</span><span class="cnt" id="cnt-reco" hidden></span></button>
+  <button class="step" data-step="5" type="button"><span class="n">5</span><span class="lbl">Ordonnance</span></button>
+  <button class="step" data-step="6" type="button"><span class="n">6</span><span class="lbl">Administration &amp; traçabilité</span></button>
+</nav>
+
+<main id="app">
+<!-- ============================================================ 1 PATIENT -->
+<section class="panel" data-panel="1">
+  <div class="card">
+    <h2>Identité du patient</h2>
+    <div class="grid">
+      <div class="f"><label class="req" for="p-nom">Nom</label><input id="p-nom" data-p="patient.nom" autocomplete="off" style="text-transform:uppercase"></div>
+      <div class="f"><label class="req" for="p-prenom">Prénom(s)</label><input id="p-prenom" data-p="patient.prenom" autocomplete="off"></div>
+      <div class="f"><span class="lab req">Sexe</span>
+        <div class="row" role="radiogroup" aria-label="Sexe">
+          <label class="chk"><input type="radio" name="sexe" data-p="patient.sexe" value="F"> Féminin</label>
+          <label class="chk"><input type="radio" name="sexe" data-p="patient.sexe" value="M"> Masculin</label>
+        </div></div>
+      <div class="f"><label class="req" for="p-ddn">Date de naissance</label><input id="p-ddn" type="date" data-p="patient.ddn"><span class="hint" id="p-age"></span></div>
+      <div class="f"><label for="p-poids">Poids (kg)</label><input id="p-poids" type="number" min="1" max="300" data-p="patient.poids"><span class="hint">facultatif</span></div>
+    </div>
+    <h3>Assurance maladie <span class="badge">facultatif — reporté sur l'ordonnance pour le bon de prise en charge</span></h3>
+    <div class="grid">
+      <div class="f"><label for="p-nir">N° d'immatriculation (NIR)</label><input id="p-nir" data-p="patient.nir" inputmode="numeric" autocomplete="off"></div>
+      <div class="f"><label for="p-rang">Rang de naissance</label><input id="p-rang" data-p="patient.rang" inputmode="numeric" maxlength="1"></div>
+      <div class="f"><label for="p-org">Code organisme</label><input id="p-org" data-p="patient.organisme" autocomplete="off"></div>
+    </div>
+    <h3>Médecin traitant &amp; transmission</h3>
+    <div class="grid">
+      <div class="f"><label for="p-mt">Médecin traitant</label><input id="p-mt" data-p="patient.medecin" placeholder="Dr …"></div>
+      <div class="f"><label for="p-mss">Messagerie sécurisée (MSSanté)</label><input id="p-mss" data-p="patient.mss" placeholder="…@medecin.mssante.fr"></div>
+      <div class="f"><label for="p-src">Source des antécédents vaccinaux</label>
+        <select id="p-src" data-p="patient.source"><option value="">—</option><option>Carnet de santé / de vaccination</option><option>Mon espace santé (DMP)</option><option>Déclaratif du patient</option><option>Aucune information</option></select></div>
+    </div>
+    <div class="q"><div class="qt">Le patient consent à la transmission des informations de vaccination à son médecin traitant
+      <small>Obligatoire en l'absence de DMP (messagerie sécurisée de santé). En cas de refus, le patient informe lui-même son médecin.</small></div>
+      <div class="yn" data-p="patient.consentMT"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+  </div>
+  <div class="nav"><span></span><button class="btn pri" data-go="2" type="button">Entretien pré-vaccinal →</button></div>
+</section>
+
+<!-- ============================================================ 2 ENTRETIEN -->
+<section class="panel" data-panel="2">
+  <div class="card">
+    <h2>Entretien de recueil d'informations <span class="tag">fiche de recueil — toutes les questions doivent être renseignées</span></h2>
+    <h3>Traitements médicamenteux à risque</h3>
+    <div class="q"><div class="qt">Traitement immunosuppresseur<small>Chimiothérapie, anti-rejet (ciclosporine…), anti-TNF, biothérapie, méthotrexate… — « Êtes-vous traité pour un cancer ? Avez-vous eu une greffe ? »</small></div>
+      <div class="yn" data-p="entretien.immunosup"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="q"><div class="qt">Corticothérapie orale &gt; 10 mg/j d'équivalent prednisone depuis plus de 14 jours<small>Considérée comme immunosuppressive</small></div>
+      <div class="yn" data-p="entretien.corticoides"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="q"><div class="qt">Anticoagulant (oral ou injectable)<small>« Prenez-vous un médicament qui fluidifie le sang ? » — identifier la molécule</small></div>
+      <div class="yn" data-p="entretien.anticoag"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="q"><div class="qt">Antiagrégant plaquettaire seul<small>Information : aucune précaution particulière</small></div>
+      <div class="yn" data-p="entretien.antiagreg"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+
+    <h3>Contre-indications des vaccins vivants atténués</h3>
+    <div class="q"><div class="qt">Immunodépression<small>Déficit immunitaire congénital ou acquis, cancer ou hémopathie en cours de traitement, greffe, VIH avec CD4 bas…</small></div>
+      <div class="yn" data-p="entretien.immunodep"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div data-show="femme">
+      <div class="q"><div class="qt">Grossesse en cours</div>
+        <div class="yn" data-p="entretien.grossesse"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+      <div class="sub" data-show="enceinte"><div class="f inline"><label for="e-sa">Terme actuel</label><input id="e-sa" type="number" min="1" max="42" data-p="entretien.sa" style="width:90px"> <span>semaines d'aménorrhée (SA)</span></div></div>
+      <div class="q" data-show="nonEnceinte"><div class="qt">Projet de grossesse dans le mois à venir<small>Vaccins vivants : éviter une grossesse dans le mois qui suit</small></div>
+        <div class="yn" data-p="entretien.projetGrossesse"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+      <div class="q"><div class="qt">Allaitement</div>
+        <div class="yn" data-p="entretien.allaitement"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    </div>
+
+    <h3>Terrain allergique</h3>
+    <div class="q"><div class="qt">Réaction allergique sévère (type anaphylactique) lors d'une vaccination antérieure<small>« À quel vaccin ? Un bilan allergologique a-t-il identifié le composant en cause ? »</small></div>
+      <div class="yn" data-p="entretien.anaphylaxie"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="sub" data-show="anaphylaxie"><div class="grid">
+      <div class="f"><label for="e-anavac">Vaccin en cause</label><select id="e-anavac" data-p="entretien.anaphylaxieVaccin">
+        <option value="inconnu">Inconnu / non identifié</option><option value="dtcap">DTP – coqueluche</option><option value="ror">ROR</option><option value="varicelle">Varicelle</option><option value="hpv">HPV</option><option value="menacwy">Méningocoque ACWY</option><option value="menb">Méningocoque B</option><option value="hepb">Hépatite B</option><option value="hepa">Hépatite A</option><option value="pneumo">Pneumocoque</option><option value="grippe">Grippe</option><option value="covid">Covid-19</option><option value="zona">Zona</option><option value="vrs">VRS</option></select></div>
+      <div class="f"><label for="e-anacomp">Composant identifié (bilan allergologique)</label><input id="e-anacomp" data-p="entretien.anaphylaxieComposant" placeholder="facultatif"></div></div></div>
+    <div class="lab" style="margin-top:8px">Allergie grave connue à un constituant de vaccin</div>
+    <div class="chkgrid">
+      <label class="chk"><input type="checkbox" data-p="entretien.allergies.oeuf"> Protéines de l'œuf (ovalbumine)</label>
+      <label class="chk"><input type="checkbox" data-p="entretien.allergies.gelatine"> Gélatine</label>
+      <label class="chk"><input type="checkbox" data-p="entretien.allergies.aminosides"> Aminosides (néomycine, gentamicine…)</label>
+      <label class="chk"><input type="checkbox" data-p="entretien.allergies.peg"> Polyéthylène glycol (PEG)</label>
+      <label class="chk"><input type="checkbox" data-p="entretien.allergies.polysorbate"> Polysorbate 80</label>
+      <label class="chk"><input type="checkbox" data-p="entretien.allergies.levure"> Levure de boulanger</label>
+    </div>
+    <div class="lab" style="margin-top:4px;font-weight:400;color:var(--ink-3);font-size:12.5px">Un antécédent d'allergie, même grave, n'est pas en soi une contre-indication sauf si le produit incriminé est un vaccin ou l'un de ses composants. En cas de doute, orienter vers le médecin ou un centre de vaccination.</div>
+
+    <h3>État de santé du jour</h3>
+    <div class="q"><div class="qt">Fièvre &gt; 38 °C</div>
+      <div class="yn" data-p="entretien.fievre"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="q"><div class="qt">Infection aiguë modérée ou sévère<small>Un simple rhume ou une infection mineure ne justifie pas de report</small></div>
+      <div class="yn" data-p="entretien.infectionAigue"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="q"><div class="qt">Syndrome de Guillain-Barré dans les 6 semaines suivant une vaccination antérieure</div>
+      <div class="yn" data-p="entretien.sgb"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="q"><div class="qt">Vaccin vivant (ROR, varicelle, fièvre jaune…) reçu dans les 4 dernières semaines</div>
+      <div class="yn" data-p="entretien.vivantRecentOui"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+    <div class="sub" data-show="vivantRecent"><div class="f inline"><label for="e-viv">Date</label><input id="e-viv" type="date" data-p="entretien.vivantRecent" style="width:180px"></div></div>
+    <div class="q"><div class="qt">Demande liée à un voyage à l'étranger<small>Les vaccins du voyageur sont exclus de la compétence officinale</small></div>
+      <div class="yn" data-p="entretien.voyage"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
+  </div>
+  <div class="nav"><button class="btn" data-go="1" type="button">← Patient</button><button class="btn pri" data-go="3" type="button">Profil &amp; antécédents →</button></div>
+</section>
+
+<!-- ============================================================ 3 PROFIL -->
+<section class="panel" data-panel="3">
+  <div class="card">
+    <h2>Facteurs de risque et situations particulières <span class="tag">cocher ce qui s'applique</span></h2>
+    <div id="risques"></div>
+  </div>
+  <div class="card">
+    <h2>Antécédents vaccinaux <span class="tag">à partir du carnet, du DMP ou du déclaratif</span></h2>
+    <div class="grid g2" id="histo"></div>
+  </div>
+  <div class="nav"><button class="btn" data-go="2" type="button">← Entretien</button><button class="btn pri" data-go="4" type="button">Voir les recommandations →</button></div>
+</section>
+
+<!-- ============================================================ 4 RECOMMANDATIONS -->
+<section class="panel" data-panel="4">
+  <div id="reco-head"></div>
+  <div class="globals" id="globals"></div>
+  <div id="reco"></div>
+  <div class="nav"><button class="btn" data-go="3" type="button">← Profil</button><button class="btn pri" data-go="5" type="button">Établir l'ordonnance →</button></div>
+</section>
+
+<!-- ============================================================ 5 ORDONNANCE -->
+<section class="panel" data-panel="5">
+  <div class="card">
+    <h2>Vérifications avant prescription</h2>
+    <ul class="checklist" id="checks"></ul>
+    <label class="chk" style="margin-top:10px"><input type="checkbox" id="confirm-entretien"> J'atteste avoir réalisé l'entretien préalable, informé le patient des bénéfices et risques de la vaccination et recueilli son consentement.</label>
+    <div id="derog-box"></div>
+    <div class="row" style="margin-top:12px">
+      <label class="chk"><input type="checkbox" id="opt-copie" checked> Imprimer aussi une copie pour l'officine</label>
+      <span class="spacer"></span>
+      <button class="btn" id="btn-print-fiche" type="button">Imprimer la fiche d'entretien</button>
+      <button class="btn pri" id="btn-print-ordo" type="button">Imprimer l'ordonnance</button>
+    </div>
+  </div>
+  <div class="preview" id="ordo-preview"></div>
+  <div class="nav"><button class="btn" data-go="4" type="button">← Recommandations</button><button class="btn pri" data-go="6" type="button">Administration &amp; traçabilité →</button></div>
+</section>
+
+<!-- ============================================================ 6 ADMINISTRATION -->
+<section class="panel" data-panel="6">
+  <div class="card">
+    <h2>Acte vaccinal <span class="tag">numéro de lot, péremption, voie et site sont obligatoires pour la traçabilité</span></h2>
+    <div id="adm-list"></div>
+    <h3>Traçabilité</h3>
+    <div class="chkgrid">
+      <label class="chk"><input type="checkbox" data-a="dmp"> Vaccination enregistrée dans le DMP (Mon espace santé)</label>
+      <label class="chk"><input type="checkbox" data-a="carnet"> Carnet de santé / de vaccination renseigné</label>
+      <label class="chk"><input type="checkbox" data-a="ordonnancier" checked> Enregistrée à l'ordonnancier (LGO)</label>
+      <label class="chk"><input type="checkbox" data-a="mtTransmis"> Information transmise au médecin traitant (MSS)</label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btn-mss" type="button">Message pour le médecin traitant</button>
+      <button class="btn" id="btn-journal" type="button" hidden>Enregistrer au registre local</button>
+      <span class="spacer"></span>
+      <button class="btn pri" id="btn-print-att" type="button">Imprimer l'attestation de vaccination</button>
+    </div>
+    <div id="adm-msg" style="margin-top:10px"></div>
+  </div>
+  <div class="card" id="fact-card"><h2>Facturation (rappel)</h2><div id="fact"></div></div>
+  <div class="preview" id="att-preview"></div>
+  <div class="nav"><button class="btn" data-go="5" type="button">← Ordonnance</button><button class="btn pri" id="btn-new2" type="button">Nouveau patient</button></div>
+</section>
+</main>
+
+<p class="foot">Outil d'aide à la décision — ne se substitue pas au jugement du pharmacien ni au calendrier des vaccinations en vigueur (référentiel intégré : calendrier 2026, avril 2026). Aucune donnée patient n'est transmise : la saisie reste dans ce navigateur et s'efface avec « Nouveau patient ». <span id="ver"></span></p>
+
+<!-- ============================================================ ADMINISTRATION / PARAMÈTRES -->
+<dialog id="dlg-pin">
+  <div class="dlg-h"><h2>Paramètres protégés</h2></div>
+  <form class="dlg-b" method="dialog" id="pin-form">
+    <p class="lead" id="pin-lead">Saisissez le code PIN d'administration.</p>
+    <div class="f" style="max-width:220px"><label for="pin-in">Code PIN</label><input id="pin-in" type="password" inputmode="numeric" autocomplete="off"></div>
+    <p class="err" id="pin-err"></p>
+    <div class="row"><button class="btn" value="cancel" type="button" id="pin-cancel">Annuler</button><button class="btn pri" type="submit" id="pin-ok">Valider</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-admin">
+  <div class="dlg-h"><h2>Paramètres</h2><span class="badge" id="cfg-src"></span><button class="btn sm" type="button" id="adm-close">Fermer</button></div>
+  <div class="dlg-b">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="off" type="button">Officine</button>
+      <button class="tab" role="tab" data-tab="ph" type="button">Pharmaciens</button>
+      <button class="tab" role="tab" data-tab="camp" type="button">Campagnes &amp; honoraires</button>
+      <button class="tab" role="tab" data-tab="cat" type="button">Catalogue des vaccins</button>
+      <button class="tab" role="tab" data-tab="sync" type="button">Sauvegarde &amp; postes</button>
+      <button class="tab" role="tab" data-tab="sec" type="button">Sécurité &amp; registre</button>
+    </div>
+    <div class="tpanel" data-tp="off">
+      <div class="grid">
+        <div class="f"><label class="req">Nom de l'officine</label><input data-s="officine.nom"></div>
+        <div class="f"><label class="req">Adresse</label><input data-s="officine.adresse"></div>
+        <div class="f"><label class="req">Code postal</label><input data-s="officine.cp"></div>
+        <div class="f"><label class="req">Ville</label><input data-s="officine.ville"></div>
+        <div class="f"><label class="req">Téléphone</label><input data-s="officine.tel" placeholder="04 73 …"></div>
+        <div class="f"><label>Adresse électronique</label><input data-s="officine.email"></div>
+        <div class="f"><label>N° FINESS</label><input data-s="officine.finess"></div>
+        <div class="f"><label>N° Assurance Maladie de l'officine</label><input data-s="officine.numAM"></div>
+      </div>
+      <div class="row" style="margin-top:12px"><div class="f"><label>Logo (en-tête des documents)</label><input type="file" accept="image/*" id="logo-in"></div><img id="logo-prev" alt="" style="max-height:48px"><button class="btn sm danger" type="button" id="logo-del">Retirer le logo</button></div>
+    </div>
+    <div class="tpanel" data-tp="ph">
+      <p class="lead">Seul un pharmacien formé à la prescription et ayant déclaré cette activité au conseil de l'Ordre (e-POP) peut établir une ordonnance de vaccin.</p>
+      <table class="t" id="ph-table"><thead><tr><th>Nom</th><th>Prénom</th><th>Statut</th><th>N° RPPS</th><th>Formé &amp; déclaré (prescription)</th><th></th></tr></thead><tbody></tbody></table>
+      <button class="btn sm" type="button" id="ph-add" style="margin-top:8px">+ Ajouter un pharmacien</button>
+    </div>
+    <div class="tpanel" data-tp="camp">
+      <h3>Campagnes</h3>
+      <div class="grid">
+        <div class="f"><label>Grippe &amp; Covid-19 (automne) — début</label><input type="date" data-s="campagnes.grippe.debut"></div>
+        <div class="f"><label>fin</label><input type="date" data-s="campagnes.grippe.fin"></div>
+        <div class="f"><label>Covid-19 (dose de printemps) — début</label><input type="date" data-s="campagnes.covidPrintemps.debut"></div>
+        <div class="f"><label>fin</label><input type="date" data-s="campagnes.covidPrintemps.fin"></div>
+        <div class="f"><label>VRS femmes enceintes — début</label><input type="date" data-s="campagnes.vrsGrossesse.debut"></div>
+        <div class="f"><label>fin</label><input type="date" data-s="campagnes.vrsGrossesse.fin"></div>
+      </div>
+      <h3>Honoraires de vaccination (TTC, métropole)</h3>
+      <div class="grid">
+        <div class="f"><label>RVA — vaccin prescrit par le pharmacien (€)</label><input type="number" step="0.01" data-s="honoraires.rvaPharmacien"></div>
+        <div class="f"><label>RVA — vaccin déjà prescrit (€)</label><input type="number" step="0.01" data-s="honoraires.rvaPrescrit"></div>
+        <div class="f"><label>VGP — grippe (€)</label><input type="number" step="0.01" data-s="honoraires.vgp"></div>
+        <div class="f"><label>INJ — Covid-19 (€)</label><input type="number" step="0.01" data-s="honoraires.inj"></div>
+        <div class="f"><label>Coefficient DROM</label><input type="number" step="0.01" data-s="honoraires.coefDrom"></div>
+        <div class="f"><label>Code prescripteur pharmacien</label><input data-s="honoraires.codePrescripteur"></div>
+      </div>
+    </div>
+    <div class="tpanel" data-tp="cat">
+      <p class="lead">Décochez une spécialité non commercialisée ou indisponible ; ajustez sa dénomination (variant Covid de la campagne) ou ses allergènes. La composition est indicative : toujours vérifier le RCP.</p>
+      <div style="overflow:auto"><table class="t" id="cat-table"><thead><tr><th>Actif</th><th>Spécialité</th><th>Valence</th><th>Âge AMM</th><th>Voies</th><th>Allergènes</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="tpanel" data-tp="sync">
+      <p class="lead">Les paramètres sont enregistrés dans ce navigateur. Pour équiper les autres postes : exportez le fichier, puis importez-le sur chaque poste. Sur le serveur, déposez ce fichier sous le nom <code>config.json</code> à côté de <code>index.html</code> : tous les postes le chargeront automatiquement.</p>
+      <div class="row"><button class="btn" type="button" id="cfg-export">Exporter les paramètres (.json)</button><label class="btn" for="cfg-import">Importer des paramètres…</label><input type="file" id="cfg-import" accept="application/json,.json" hidden><button class="btn danger" type="button" id="cfg-reset">Réinitialiser</button></div>
+      <p class="hint" id="cfg-info" style="color:var(--ink-3);font-size:13px"></p>
+    </div>
+    <div class="tpanel" data-tp="sec">
+      <h3>Code PIN d'administration</h3>
+      <div class="row"><div class="f" style="max-width:200px"><label>Nouveau code PIN</label><input type="password" id="pin-new" inputmode="numeric" autocomplete="new-password"></div><button class="btn" type="button" id="pin-save">Enregistrer le code</button></div>
+      <p class="hint" style="color:var(--ink-3);font-size:13px">Protection contre les modifications accidentelles (non chiffrée). Laisser vide puis enregistrer pour supprimer le code.</p>
+      <h3>Registre local des actes</h3>
+      <label class="chk"><input type="checkbox" data-s="journal.actif"> Activer un registre local des vaccinations sur ce poste</label>
+      <p class="hint" style="color:var(--ink-3);font-size:13px">Désactivé par défaut : la traçabilité réglementaire se fait à l'ordonnancier du LGO et au DMP. Le registre contient des données de santé ; il reste dans ce navigateur.</p>
+      <div class="row"><button class="btn" type="button" id="jr-export">Exporter le registre (.csv)</button><button class="btn danger" type="button" id="jr-purge">Vider le registre</button><span class="badge" id="jr-count"></span></div>
+    </div>
+  </div>
+</dialog>
+
+<div id="print-root" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+<script id="vp-engine">
+/* =====================================================================
+   MOTEUR DE RECOMMANDATIONS — Prescription vaccinale à l'officine
+   Référentiel : Calendrier des vaccinations et recommandations vaccinales
+   2026 (Ministère de la santé, avril 2026) ; HAS « Rattrapage vaccinal en
+   population générale » (2019) ; Ordre national des pharmaciens « La
+   vaccination à l'officine : qui peut faire quoi ? » (19/01/2026) ;
+   mémos Assurance Maladie (vaccination / grippe).
+   Ce bloc est autonome (aucune dépendance au DOM) pour pouvoir être testé.
+   ===================================================================== */
+(function (root) {
+  'use strict';
+
+  /* ---------------------------------------------------------- dates */
+  const D = {
+    parse(s) {
+      if (!s) return null;
+      if (s instanceof Date) return new Date(s.getFullYear(), s.getMonth(), s.getDate());
+      const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(String(s));
+      if (!m) return null;
+      return new Date(+m[1], +m[2] - 1, m[3] ? +m[3] : 1);
+    },
+    iso(d) {
+      if (!d) return '';
+      const p = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    },
+    fr(d) {
+      d = D.parse(d);
+      if (!d) return '';
+      const p = n => String(n).padStart(2, '0');
+      return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+    },
+    addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; },
+    addMonths(d, n) {
+      const y = d.getFullYear(), m = d.getMonth() + n;
+      const last = new Date(y, m + 1, 0).getDate();
+      return new Date(y, m, Math.min(d.getDate(), last));
+    },
+    addYears(d, n) { return D.addMonths(d, 12 * n); },
+    /* âge en années révolues */
+    age(dob, ref) {
+      let a = ref.getFullYear() - dob.getFullYear();
+      const m = ref.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && ref.getDate() < dob.getDate())) a--;
+      return a;
+    },
+    ageExact(dob, ref) { return (ref - dob) / (365.2425 * 86400000); },
+    days(a, b) { return Math.round((b - a) / 86400000); },
+    max(...ds) { const v = ds.filter(Boolean); return v.length ? new Date(Math.max(...v)) : null; },
+    between(d, a, b) { return !!(d && a && b && d >= a && d <= b); }
+  };
+
+  /* ------------------------------------------------- spécialités */
+  /* allergènes : oeuf, gelatine, aminosides, peg, polysorbate, levure
+     (composition indicative tirée des RCP / supports de formation — à
+     vérifier dans le RCP en vigueur ; modifiable dans l'administration) */
+  const PRODUITS = [
+    // Diphtérie – tétanos – poliomyélite – coqueluche
+    { id: 'boostrixtetra', nom: 'Boostrixtetra', groupe: 'dtcap', dc: 'Vaccin diphtérique, tétanique, coquelucheux (acellulaire, multicomposé) et poliomyélitique (inactivé), adsorbé, à teneur réduite en antigènes (dTcaP)', type: 'inactivé', voies: ['IM'], ageMin: 4, ageMax: null, allergenes: ['aminosides'], forme: 'dTcaP' },
+    { id: 'repevax', nom: 'Repevax', groupe: 'dtcap', dc: 'Vaccin diphtérique, tétanique, coquelucheux (acellulaire, multicomposé) et poliomyélitique (inactivé), adsorbé, à teneur réduite en antigènes (dTcaP)', type: 'inactivé', voies: ['IM'], ageMin: 3, ageMax: null, allergenes: ['aminosides'], forme: 'dTcaP' },
+    { id: 'tetravac', nom: 'Tétravac-acellulaire', groupe: 'dtcap', dc: 'Vaccin diphtérique, tétanique, coquelucheux (acellulaire) et poliomyélitique (inactivé), adsorbé, à doses entières (DTCaP)', type: 'inactivé', voies: ['IM'], ageMin: 0.17, ageMax: 13, allergenes: ['aminosides'], forme: 'DTCaP' },
+    // ROR
+    { id: 'priorix', nom: 'Priorix', groupe: 'ror', dc: 'Vaccin rougeoleux, des oreillons et rubéoleux vivant atténué (ROR)', type: 'vivant atténué', vivant: true, voies: ['SC', 'IM'], ageMin: 0.75, ageMax: null, allergenes: ['aminosides'] },
+    { id: 'mmrvaxpro', nom: 'M-M-RVaxPro', groupe: 'ror', dc: 'Vaccin rougeoleux, des oreillons et rubéoleux vivant atténué (ROR)', type: 'vivant atténué', vivant: true, voies: ['IM', 'SC'], ageMin: 0.75, ageMax: null, allergenes: ['gelatine', 'aminosides'] },
+    // Varicelle
+    { id: 'varivax', nom: 'Varivax', groupe: 'varicelle', dc: 'Vaccin varicelleux vivant atténué', type: 'vivant atténué', vivant: true, voies: ['IM', 'SC'], ageMin: 1, ageMax: null, allergenes: ['gelatine', 'aminosides'], intervalle: [28, 56] },
+    { id: 'varilrix', nom: 'Varilrix', groupe: 'varicelle', dc: 'Vaccin varicelleux vivant atténué', type: 'vivant atténué', vivant: true, voies: ['SC', 'IM'], ageMin: 1, ageMax: null, allergenes: ['aminosides'], intervalle: [42, 70] },
+    // HPV
+    { id: 'gardasil9', nom: 'Gardasil 9', groupe: 'hpv', dc: 'Vaccin papillomavirus humain 9-valent (types 6, 11, 16, 18, 31, 33, 45, 52, 58), recombinant, adsorbé', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 9, ageMax: null, allergenes: ['levure'] },
+    { id: 'cervarix', nom: 'Cervarix', groupe: 'hpv', dc: 'Vaccin papillomavirus humain bivalent (types 16, 18), recombinant, avec adjuvant, adsorbé', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 9, ageMax: null, allergenes: [], sexe: 'F', continuationSeule: true },
+    // Méningocoques ACWY
+    { id: 'nimenrix', nom: 'Nimenrix', groupe: 'menacwy', dc: 'Vaccin méningococcique des groupes A, C, W et Y conjugué', type: 'inactivé (conjugué)', voies: ['IM'], ageMin: 0.12, ageMax: null, allergenes: [] },
+    { id: 'menquadfi', nom: 'MenQuadfi', groupe: 'menacwy', dc: 'Vaccin méningococcique des groupes A, C, W et Y conjugué', type: 'inactivé (conjugué)', voies: ['IM'], ageMin: 1, ageMax: null, allergenes: [] },
+    { id: 'menveo', nom: 'Menveo', groupe: 'menacwy', dc: 'Vaccin méningococcique des groupes A, C, W-135 et Y conjugué', type: 'inactivé (conjugué)', voies: ['IM'], ageMin: 2, ageMax: null, allergenes: [] },
+    // Méningocoque B
+    { id: 'bexsero', nom: 'Bexsero', groupe: 'menb', dc: 'Vaccin méningococcique groupe B (ADNr, composant, adsorbé)', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 0.17, ageMax: null, allergenes: ['aminosides'] },
+    { id: 'trumenba', nom: 'Trumenba', groupe: 'menb', dc: 'Vaccin méningococcique groupe B (recombinant, adsorbé)', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 10, ageMax: null, allergenes: [] },
+    // Hépatite B
+    { id: 'engerixb20', nom: 'Engerix B 20 µg/1 mL', groupe: 'hepb', dc: 'Vaccin de l’hépatite B (ADNr), adsorbé — 20 µg', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 11, ageMax: null, allergenes: ['levure'] },
+    { id: 'engerixb10', nom: 'Engerix B 10 µg/0,5 mL', groupe: 'hepb', dc: 'Vaccin de l’hépatite B (ADNr), adsorbé — 10 µg', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 0, ageMax: 15, allergenes: ['levure'] },
+    { id: 'hbvaxpro5', nom: 'HBVaxPro 5 µg', groupe: 'hepb', dc: 'Vaccin de l’hépatite B (ADNr) — 5 µg', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 0, ageMax: 15, allergenes: ['levure'] },
+    { id: 'twinrix', nom: 'Twinrix Adulte', groupe: 'hepab', dc: 'Vaccin de l’hépatite A (inactivé) et de l’hépatite B (ADNr), adsorbé', type: 'inactivé', voies: ['IM'], ageMin: 16, ageMax: null, allergenes: ['aminosides', 'levure'] },
+    // Hépatite A
+    { id: 'avaxim160', nom: 'Avaxim 160 U', groupe: 'hepa', dc: 'Vaccin de l’hépatite A inactivé, adsorbé — 160 U', type: 'inactivé', voies: ['IM'], ageMin: 16, ageMax: null, allergenes: ['aminosides'] },
+    { id: 'avaxim80', nom: 'Avaxim 80 U Pédiatrique', groupe: 'hepa', dc: 'Vaccin de l’hépatite A inactivé, adsorbé — 80 U', type: 'inactivé', voies: ['IM'], ageMin: 1, ageMax: 15, allergenes: ['aminosides'] },
+    { id: 'havrix1440', nom: 'Havrix 1440 U/1 mL Adultes', groupe: 'hepa', dc: 'Vaccin de l’hépatite A inactivé, adsorbé — 1440 U', type: 'inactivé', voies: ['IM'], ageMin: 16, ageMax: null, allergenes: ['aminosides'] },
+    { id: 'havrix720', nom: 'Havrix 720 U/0,5 mL Enfants', groupe: 'hepa', dc: 'Vaccin de l’hépatite A inactivé, adsorbé — 720 U', type: 'inactivé', voies: ['IM'], ageMin: 1, ageMax: 15, allergenes: ['aminosides'] },
+    { id: 'vaqta50', nom: 'Vaqta 50 U/1 mL', groupe: 'hepa', dc: 'Vaccin de l’hépatite A inactivé, adsorbé — 50 U', type: 'inactivé', voies: ['IM'], ageMin: 18, ageMax: null, allergenes: [] },
+    // Pneumocoque
+    { id: 'prevenar20', nom: 'Prevenar 20', groupe: 'pneumo', dc: 'Vaccin pneumococcique polyosidique conjugué 20-valent, adsorbé (VPC20)', type: 'inactivé (conjugué)', voies: ['IM'], ageMin: 0.12, ageMax: null, allergenes: [], pneumo: 'vpc20' },
+    { id: 'capvaxive', nom: 'Capvaxive', groupe: 'pneumo', dc: 'Vaccin pneumococcique polyosidique conjugué 21-valent (VPC21)', type: 'inactivé (conjugué)', voies: ['IM'], ageMin: 18, ageMax: null, allergenes: [], pneumo: 'vpc20' },
+    { id: 'prevenar13', nom: 'Prevenar 13', groupe: 'pneumo', dc: 'Vaccin pneumococcique polyosidique conjugué 13-valent, adsorbé (VPC13)', type: 'inactivé (conjugué)', voies: ['IM'], ageMin: 0.12, ageMax: null, allergenes: [], pneumo: 'vpc13' },
+    { id: 'vaxneuvance', nom: 'Vaxneuvance', groupe: 'pneumo', dc: 'Vaccin pneumococcique polyosidique conjugué 15-valent, adsorbé (VPC15)', type: 'inactivé (conjugué)', voies: ['IM'], ageMin: 0.12, ageMax: null, allergenes: [], pneumo: 'vpc13' },
+    { id: 'pneumovax', nom: 'Pneumovax', groupe: 'pneumo', dc: 'Vaccin pneumococcique polyosidique non conjugué 23-valent (VPP23)', type: 'inactivé (polyosidique)', voies: ['IM', 'SC'], ageMin: 2, ageMax: null, allergenes: [], pneumo: 'vpp23' },
+    // Grippe
+    { id: 'vaxigrip', nom: 'Vaxigrip', groupe: 'grippe', dc: 'Vaccin grippal trivalent (inactivé, à virion fragmenté)', type: 'inactivé', voies: ['IM', 'SC'], ageMin: 0.5, ageMax: null, allergenes: ['oeuf', 'aminosides'] },
+    { id: 'influvac', nom: 'Influvac', groupe: 'grippe', dc: 'Vaccin grippal trivalent (inactivé, antigène de surface)', type: 'inactivé', voies: ['IM', 'SC'], ageMin: 0.5, ageMax: null, allergenes: ['oeuf', 'aminosides'] },
+    { id: 'flucelvax', nom: 'Flucelvax', groupe: 'grippe', dc: 'Vaccin grippal trivalent (inactivé, antigène de surface, préparé sur culture cellulaire)', type: 'inactivé', voies: ['IM'], ageMin: 0.5, ageMax: null, allergenes: [] },
+    { id: 'efluelda', nom: 'Efluelda', groupe: 'grippe', dc: 'Vaccin grippal trivalent (inactivé, à virion fragmenté) hautement dosé', type: 'inactivé (haute dose)', voies: ['IM'], ageMin: 65, ageMax: null, allergenes: ['oeuf'], senior: true },
+    { id: 'fluad', nom: 'Fluad', groupe: 'grippe', dc: 'Vaccin grippal trivalent (inactivé, antigène de surface) avec adjuvant MF59', type: 'inactivé (adjuvanté)', voies: ['IM'], ageMin: 65, ageMax: null, allergenes: ['oeuf', 'aminosides'], senior: true },
+    // Covid-19
+    { id: 'comirnaty30', nom: 'Comirnaty 30 µg (vaccin adapté de la campagne)', groupe: 'covid', dc: 'Vaccin à ARNm contre la Covid-19 (modifié à nucléoside) — 30 µg', type: 'ARNm', voies: ['IM'], ageMin: 12, ageMax: null, allergenes: ['peg'] },
+    { id: 'comirnaty10', nom: 'Comirnaty 10 µg (vaccin adapté de la campagne)', groupe: 'covid', dc: 'Vaccin à ARNm contre la Covid-19 (modifié à nucléoside) — 10 µg', type: 'ARNm', voies: ['IM'], ageMin: 5, ageMax: 11, allergenes: ['peg'] },
+    { id: 'nuvaxovid', nom: 'Nuvaxovid', groupe: 'covid', dc: 'Vaccin contre la Covid-19 (recombinant, avec adjuvant)', type: 'protéine recombinante', voies: ['IM'], ageMin: 12, ageMax: null, allergenes: ['polysorbate'], grossesse: 'eviter' },
+    // Zona
+    { id: 'shingrix', nom: 'Shingrix', groupe: 'zona', dc: 'Vaccin du zona (recombinant, avec adjuvant)', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 18, ageMax: null, allergenes: ['polysorbate'] },
+    // VRS
+    { id: 'abrysvo', nom: 'Abrysvo', groupe: 'vrs', dc: 'Vaccin contre le virus respiratoire syncytial (bivalent, recombinant)', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 18, ageMax: null, allergenes: ['polysorbate'], grossesseOK: true },
+    { id: 'arexvy', nom: 'Arexvy', groupe: 'vrs', dc: 'Vaccin contre le virus respiratoire syncytial (recombinant, avec adjuvant)', type: 'inactivé (recombinant)', voies: ['IM'], ageMin: 50, ageMax: null, allergenes: ['polysorbate'] },
+    { id: 'mresvia', nom: 'mResvia', groupe: 'vrs', dc: 'Vaccin à ARNm contre le virus respiratoire syncytial', type: 'ARNm', voies: ['IM'], ageMin: 18, ageMax: null, allergenes: ['peg'] }
+  ];
+
+  const ALLERGENES = {
+    oeuf: 'protéines de l’œuf (ovalbumine)', gelatine: 'gélatine', aminosides: 'aminosides (néomycine, gentamicine, kanamycine, streptomycine…)',
+    peg: 'polyéthylène glycol (PEG)', polysorbate: 'polysorbate 80', levure: 'levure (Saccharomyces cerevisiae)'
+  };
+
+  /* -------------------------------------------- groupes (valences) */
+  const GROUPES = {
+    dtcap: { label: 'Diphtérie – Tétanos – Poliomyélite – Coqueluche', court: 'dTcaP', maladies: 'Diphtérie, tétanos, poliomyélite, coqueluche' },
+    ror: { label: 'Rougeole – Oreillons – Rubéole', court: 'ROR', maladies: 'Rougeole, oreillons, rubéole', vivant: true },
+    varicelle: { label: 'Varicelle', court: 'Varicelle', maladies: 'Varicelle', vivant: true },
+    hpv: { label: 'Papillomavirus humains (HPV)', court: 'HPV', maladies: 'Infections à papillomavirus humains (lésions précancéreuses et cancers, condylomes)' },
+    menacwy: { label: 'Méningocoques A, C, W, Y', court: 'Méningo ACWY', maladies: 'Infections invasives à méningocoques A, C, W, Y' },
+    menb: { label: 'Méningocoque B', court: 'Méningo B', maladies: 'Infections invasives à méningocoque B' },
+    hepb: { label: 'Hépatite B', court: 'Hépatite B', maladies: 'Hépatite B' },
+    hepa: { label: 'Hépatite A', court: 'Hépatite A', maladies: 'Hépatite A' },
+    pneumo: { label: 'Pneumocoque', court: 'Pneumocoque', maladies: 'Infections invasives et pneumonies à pneumocoque' },
+    grippe: { label: 'Grippe saisonnière', court: 'Grippe', maladies: 'Grippe saisonnière' },
+    covid: { label: 'Covid-19', court: 'Covid-19', maladies: 'Covid-19' },
+    zona: { label: 'Zona', court: 'Zona', maladies: 'Zona et douleurs post-zostériennes' },
+    vrs: { label: 'Virus respiratoire syncytial (VRS)', court: 'VRS', maladies: 'Infections à VRS' + '' },
+    autres: { label: 'Vaccins hors compétence officinale', court: 'Autres', maladies: '' }
+  };
+
+  const STATUTS = {
+    recommande: { label: 'Recommandé', ordre: 1, prescriptible: true },
+    propose: { label: 'Peut être proposé', ordre: 2, prescriptible: true },
+    differer: { label: 'À différer', ordre: 3 },
+    orienter: { label: 'Orienter vers le médecin', ordre: 4 },
+    ci: { label: 'Contre-indiqué', ordre: 5 },
+    en_cours: { label: 'Schéma en cours', ordre: 6 },
+    a_jour: { label: 'À jour', ordre: 7 },
+    non_indique: { label: 'Non indiqué', ordre: 8 }
+  };
+
+  /* ------------------------------------------------------ contexte */
+  function buildContext(input, settings, todayStr) {
+    const today = D.parse(todayStr) || D.parse(D.iso(new Date()));
+    const p = input.patient || {}, e = input.entretien || {}, r = input.risques || {}, h = input.histo || {};
+    const dob = D.parse(p.ddn);
+    const age = dob ? D.age(dob, today) : null;
+    const ageExact = dob ? D.ageExact(dob, today) : null;
+    const F = p.sexe === 'F';
+    const pregnant = F && e.grossesse === true;
+    const corticoID = e.corticoides === true;
+    const ID = e.immunodep === true || e.immunosup === true || corticoID || r.vih === true || r.greffe === true || r.cancer === true || r.deficitImmun === true;
+    const allergies = new Set(Object.keys(e.allergies || {}).filter(k => e.allergies[k]));
+    const camp = (settings && settings.campagnes) || {};
+    const per = (o) => o && o.debut && o.fin ? [D.parse(o.debut), D.parse(o.fin)] : null;
+    const flu = per(camp.grippe), spring = per(camp.covidPrintemps), vrsP = per(camp.vrsGrossesse);
+    return {
+      today, dob, age, ageExact, F, sexe: p.sexe, pregnant,
+      sa: pregnant && e.sa !== '' && e.sa != null && !isNaN(+e.sa) ? +e.sa : null,
+      ID, corticoID, allergies, e, r, h, settings: settings || {},
+      birthYear: dob ? dob.getFullYear() : null,
+      inFlu: flu ? D.between(today, flu[0], flu[1]) : false, flu,
+      inSpring: spring ? D.between(today, spring[0], spring[1]) : false, spring,
+      inVrsP: vrsP ? D.between(today, vrsP[0], vrsP[1]) : true, vrsP,
+      femmeProcreer: F && age != null && age >= 15 && age <= 49
+    };
+  }
+
+  function ageAtDate(c, d) { return c.dob && d ? D.ageExact(c.dob, d) : null; }
+
+  /* --------------------------------------------- filtres de produits */
+  function produitsDisponibles(groupes, c, opts) {
+    opts = opts || {};
+    const over = (c.settings.catalogue) || {};
+    const list = PRODUITS.map(p => Object.assign({}, p, over[p.id] || {}))
+      .filter(p => groupes.includes(p.groupe) && p.actif !== false);
+    const ok = [], exclus = [];
+    for (const p of list) {
+      let raison = null;
+      if (opts.only && !opts.only.includes(p.id)) raison = 'hors schéma';
+      else if (c.ageExact != null && p.ageMin != null && c.ageExact < p.ageMin) raison = 'âge inférieur à l’AMM';
+      else if (c.age != null && p.ageMax != null && c.age > p.ageMax) raison = 'âge supérieur à l’AMM';
+      else if (p.sexe && p.sexe !== c.sexe) raison = 'réservé aux ' + (p.sexe === 'F' ? 'filles/femmes' : 'garçons/hommes');
+      else if (p.continuationSeule && !opts.continuation) raison = 'uniquement pour poursuivre un schéma déjà débuté avec ce vaccin';
+      else {
+        const al = (p.allergenes || []).filter(a => c.allergies.has(a));
+        if (al.length) raison = 'contient : ' + al.map(a => ALLERGENES[a] || a).join(', ');
+      }
+      if (!raison && c.pregnant && p.grossesse === 'eviter') raison = 'à éviter pendant la grossesse';
+      if (raison) exclus.push({ id: p.id, nom: p.nom, raison });
+      else ok.push(p);
+    }
+    if (opts.prefer) ok.sort((a, b) => (opts.prefer.includes(b.id) ? 1 : 0) - (opts.prefer.includes(a.id) ? 1 : 0));
+    return { ok, exclus };
+  }
+
+  /* ----------------------------------------------- helpers d'items */
+  function item(groupe, status, o) {
+    return Object.assign({
+      groupe, label: GROUPES[groupe].label, maladies: GROUPES[groupe].maladies, vivant: !!GROUPES[groupe].vivant,
+      status, raisons: [], alertes: [], schema: '', doseLabel: '', doseRang: null, totalDoses: null,
+      prochaine: null, prochaineNote: '', produits: [], exclus: [], priseEnCharge: '', honoraire: 'RVA', refs: []
+    }, o || {});
+  }
+
+  function rang(n) { return n === 1 ? '1re dose' : n + 'e dose'; }
+
+  /* ------------------------------------------------------- dTcaP */
+  /* Rappels de l'adulte à âges fixes 25, 45, 65 ans puis tous les 10 ans.
+     Transition (calendrier 2013) : délai > 5 ans depuis le dernier rappel,
+     et intervalle maximum de 25 ans entre 25 et 65 ans, 15 ans après 65 ans. */
+  function prochainRappelDTP(c, lastDate) {
+    const L = ageAtDate(c, lastDate);
+    const FIX = [25, 45, 65, 75, 85, 95, 105, 115];
+    let f = FIX.find(x => x > L + 5);
+    if (f == null) f = 125;
+    const maxGap = f <= 65 ? 25 : 15;
+    if (f <= L + maxGap) return { date: D.addYears(c.dob, f), age: f, motif: 'rendez-vous vaccinal à âge fixe (' + f + ' ans)' };
+    return { date: D.addYears(lastDate, maxGap), age: null, motif: 'intervalle maximal de ' + maxGap + ' ans depuis le dernier rappel' };
+  }
+
+  function evalDTP(c) {
+    const h = c.h.dtp || {};
+    const A = c.age;
+    const last = D.parse(h.dernier);
+    const prods = (only) => produitsDisponibles(['dtcap'], c, { only });
+    const reduit = ['boostrixtetra', 'repevax'];
+
+    // Femme enceinte : à chaque grossesse dès le 2e trimestre, idéalement 20–36 SA
+    if (c.pregnant) {
+      const it = item('dtcap', 'recommande', { schema: '1 dose de dTcaP à chaque grossesse, dès le 2e trimestre, de préférence entre 20 et 36 SA', doseLabel: 'Dose de grossesse', refs: ['Calendrier 2026 §2.1 et §2.22.2'] });
+      const pr = prods(reduit); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.raisons.push('Vaccination contre la coqueluche recommandée à chaque grossesse, même si la femme a été vaccinée avant la grossesse (protection du nouveau-né par les anticorps maternels).');
+      if (c.sa != null && c.sa < 14) { it.status = 'differer'; it.raisons.push('Grossesse au 1er trimestre (' + c.sa + ' SA) : vaccination à réaliser à partir du 2e trimestre, idéalement entre 20 et 36 SA.'); it.prochaine = D.addDays(c.today, (20 - c.sa) * 7); it.prochaineNote = 'à partir de 20 SA'; }
+      else if (c.sa != null && c.sa < 20) { it.status = 'propose'; it.raisons.push('2e trimestre (' + c.sa + ' SA) : possible ; période préférentielle 20–36 SA.'); }
+      else if (c.sa != null && c.sa > 36) it.alertes.push('Au-delà de 36 SA, le transfert d’anticorps est moins optimal ; si l’accouchement survient moins d’un mois après la vaccination, vacciner l’entourage (cocooning).');
+      const vrs = D.parse((c.h.vrs || {}).date);
+      if (vrs && D.days(vrs, c.today) < 14) { it.status = 'differer'; it.raisons.push('Abrysvo reçu le ' + D.fr(vrs) + ' : respecter un intervalle d’au moins 2 semaines entre Abrysvo et le dTcaP.'); it.prochaine = D.addDays(vrs, 14); }
+      it.priseEnCharge = 'Vaccin du calendrier pris en charge (100 % au titre de la maternité à partir du 6e mois de grossesse ; 65 % sinon).';
+      return it;
+    }
+
+    if (A < 11) return null;
+
+    const statut = h.statut || (last ? 'connu' : 'inconnu');
+    if (statut !== 'connu' || !last) {
+      const it = item('dtcap', 'recommande', { doseLabel: 'Rattrapage (statut inconnu ou non vacciné)', refs: ['HAS — Rattrapage vaccinal en population générale (2019)', 'Calendrier 2026 §2.23'] });
+      if (A <= 13) {
+        it.schema = '11–13 ans : rattrapage avec un vaccin à doses entières (DTCaP) — 3 doses nécessaires au total (M0, M2, M8-12) si jamais vacciné';
+        const pr = prods(['tetravac']); it.produits = pr.ok; it.exclus = pr.exclus;
+      } else {
+        it.schema = '≥ 14 ans : 3 doses au total (M0, M2, M8-12), la 1re en dTcaP ; puis recalage sur les rappels à âge fixe (25, 45, 65 ans…)';
+        const pr = prods(reduit); it.produits = pr.ok; it.exclus = pr.exclus;
+      }
+      it.raisons.push(statut === 'jamais' ? 'Personne déclarée non vaccinée : rattrapage nécessaire.' : 'Statut vaccinal inconnu : rattrapage indiqué (il n’est pas dangereux de vacciner une personne déjà immune).');
+      it.alertes.push('Statut inconnu : un dosage des anticorps antitétaniques 4 à 8 semaines après la 1re dose permet d’adapter la suite du rattrapage. Situation complexe (vacciné à l’étranger, primo-arrivant) : orienter vers un centre de vaccination.');
+      it.doseRang = 1; it.totalDoses = 3; it.prochaine = D.addMonths(c.today, 2); it.prochaineNote = '2e dose du rattrapage (M2), sous réserve du résultat sérologique';
+      it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 % (100 % ALD/situations exonérantes).';
+      return it;
+    }
+
+    const Lage = ageAtDate(c, last);
+    const sinceY = D.ageExact(last, c.today);
+    // 11-13 ans
+    if (A <= 13) {
+      if (h.rappel6 === 'non' || h.rappel6 === 'dTcaP') {
+        const it = item('dtcap', 'recommande', { doseLabel: 'Rappel 11–13 ans (doses entières)', schema: 'Rappel unique entre 11 et 13 ans avec un vaccin DTCaP à doses entières', refs: ['Calendrier 2026 §2.1 et §2.4'] });
+        const pr = prods(['tetravac']); it.produits = pr.ok; it.exclus = pr.exclus;
+        it.raisons.push(h.rappel6 === 'non' ? 'Rappel des 6 ans non effectué : rattrapage entre 11 et 13 ans avec un vaccin « pédiatrique » DTCaP (Tétravac-acellulaire).' : 'Rappel des 6 ans réalisé avec un dTcaP (pénurie) : le rappel 11–13 ans doit être fait avec un DTCaP à doses entières.');
+        it.prochaine = D.addYears(c.dob, 25); it.prochaineNote = 'rappel suivant à 25 ans';
+        it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 %.';
+        return it;
+      }
+      if (Lage >= 11) return item('dtcap', 'a_jour', { raisons: ['Rappel de l’adolescence réalisé le ' + D.fr(last) + '.'], prochaine: D.addYears(c.dob, 25), prochaineNote: 'prochain rappel à 25 ans' });
+      const it = item('dtcap', 'recommande', { doseLabel: 'Rappel 11–13 ans', schema: 'Rappel unique entre 11 et 13 ans (dTcaP)', refs: ['Calendrier 2026 §2.4'] });
+      const pr = prods(reduit); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.raisons.push('Rappel diphtérie-tétanos-poliomyélite-coqueluche recommandé entre 11 et 13 ans.');
+      if (sinceY < 2) it.alertes.push('Dernière dose il y a moins de 2 ans (' + D.fr(last) + ') : vérifier l’intervalle avec le carnet.');
+      it.prochaine = D.addYears(c.dob, 25); it.prochaineNote = 'rappel suivant à 25 ans';
+      it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 %.';
+      return it;
+    }
+    // ≥ 14 ans
+    let due;
+    if (A < 25 && Lage < 11) due = { date: c.today, motif: 'rappel de l’adolescence (11–13 ans) non réalisé : rattrapage' };
+    else due = prochainRappelDTP(c, last);
+    const cocoon = c.r.entourageNourrisson === true || c.r.projetParental === true;
+    const coqOK = h.coqueluche !== false;
+    if (due.date <= c.today) {
+      const it = item('dtcap', 'recommande', { doseLabel: 'Rappel dTcaP', schema: 'Rappels de l’adulte à 25, 45 et 65 ans puis tous les 10 ans (75, 85, 95 ans…), toujours avec la valence coqueluche (dTcaP)', refs: ['Calendrier 2026 §2.4 et tableau de transition 4.7'] });
+      const pr = prods(reduit); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.raisons.push('Dernier rappel le ' + D.fr(last) + ' (à ' + Math.floor(Lage) + ' ans) : rappel dû — ' + due.motif + '.');
+      if (sinceY < 5) { it.status = 'a_jour'; it.raisons = ['Dernier rappel il y a moins de 5 ans : délai minimal non atteint.']; it.prochaine = D.addYears(last, 5); return it; }
+      const nx = prochainRappelDTP(c, c.today); it.prochaine = nx.date; it.prochaineNote = 'rappel suivant : ' + nx.motif;
+      if (c.r.proSante) it.alertes.push('Professionnel de santé : vaccination DTP obligatoire (art. L. 3111-4 CSP).');
+      it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 % (100 % ALD/situations exonérantes).';
+      return it;
+    }
+    // pas dû selon le calendrier : stratégie du cocooning ?
+    if (cocoon && (!coqOK || sinceY >= 5)) {
+      const it = item('dtcap', 'recommande', { doseLabel: 'Rappel coqueluche (cocooning)', schema: 'Stratégie du cocooning : 1 dose de dTcaP si non vacciné contre la coqueluche ou si la dernière dose date de plus de 5 ans', refs: ['Calendrier 2026 §2.1'] });
+      const pr = prods(reduit); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.raisons.push('Entourage d’un nourrisson de moins de 6 mois (ou projet parental) et ' + (!coqOK ? 'aucune vaccination coquelucheuse documentée.' : 'dernière dose coquelucheuse > 5 ans (' + D.fr(last) + ').'));
+      const nx = prochainRappelDTP(c, c.today); it.prochaine = nx.date; it.prochaineNote = 'rappel suivant : ' + nx.motif;
+      it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 %.';
+      return it;
+    }
+    return item('dtcap', 'a_jour', { raisons: ['Dernier rappel le ' + D.fr(last) + '.'], prochaine: due.date, prochaineNote: 'prochain rappel : ' + due.motif });
+  }
+
+  /* --------------------------------------------------------- ROR */
+  function evalROR(c) {
+    if (c.age < 11) return null;
+    const h = c.h.ror || {};
+    const doses = +h.doses || 0;
+    const last = D.parse(h.dernier);
+    const prods = () => produitsDisponibles(['ror'], c);
+    const base = { schema: '2 doses au total pour les personnes nées depuis 1980 (3 si 1re dose avant 12 mois), à au moins 1 mois d’intervalle', refs: ['Calendrier 2026 §2.17'] };
+    let it = null;
+    if (c.birthYear >= 1980) {
+      const target = h.avant12mois ? 3 : 2;
+      if (doses >= target) return item('ror', 'a_jour', { raisons: [doses + ' doses documentées.'] });
+      it = item('ror', 'recommande', base);
+      it.raisons.push('Né(e) en ' + c.birthYear + ' (≥ 1980) : ' + doses + ' dose(s) reçue(s) sur ' + target + ' — à compléter quels que soient les antécédents de rougeole, oreillons ou rubéole.');
+      it.doseRang = doses + 1; it.totalDoses = target; it.doseLabel = rang(doses + 1) + ' sur ' + target;
+      if (doses + 1 < target) { it.prochaine = D.addMonths(c.today, 1); it.prochaineNote = rang(doses + 2) + ' au moins 1 mois plus tard'; }
+      if (last && D.days(last, c.today) < 28) { it.status = 'differer'; it.prochaine = D.addDays(last, 28); it.raisons.push('Dose précédente le ' + D.fr(last) + ' : intervalle minimal d’1 mois.'); }
+    } else {
+      const femme = c.F && (c.e.projetGrossesse || c.femmeProcreer || c.r.postPartum);
+      if (femme && doses === 0 && !h.rubeoleImmune) {
+        it = item('ror', c.e.projetGrossesse || c.r.postPartum ? 'recommande' : 'propose', base);
+        it.schema = 'Femme née avant 1980 non vaccinée contre la rubéole : 1 dose de ROR';
+        it.raisons.push('Femme née avant 1980, non vaccinée et sans immunité rubéoleuse documentée' + (c.e.projetGrossesse ? ', avec projet de grossesse.' : c.r.postPartum ? ', en post-partum.' : ', en âge de procréer.'));
+        it.doseRang = 1; it.totalDoses = 1; it.doseLabel = 'Dose unique';
+      } else if ((c.r.proSante || c.r.proPetiteEnfance) && doses < 1 && !h.rougeoleAntecedent) {
+        it = item('ror', 'recommande', base);
+        it.schema = 'Professionnel né avant 1980, non vacciné, sans antécédent de rougeole : 1 dose de ROR (2 doses en situation de cas groupés)';
+        it.raisons.push('Professionnel de santé ou de la petite enfance né avant 1980 sans antécédent connu de rougeole.');
+        it.alertes.push('LFSS 2026 : obligation d’immunisation contre la rougeole pour ces professionnels (modalités réglementaires à paraître).');
+        it.doseRang = 1; it.totalDoses = 1; it.doseLabel = 'Dose unique';
+      } else return item('ror', 'non_indique', { raisons: ['Né(e) avant 1980 : pas d’indication en population générale (hors projet de grossesse, profession exposée ou cas groupés).'] });
+    }
+    const pr = prods(); it.produits = pr.ok; it.exclus = pr.exclus;
+    it.alertes.push('Vaccin vivant : éviter toute grossesse dans le mois suivant la vaccination.');
+    if (c.allergies.has('oeuf')) it.alertes.push('Allergie à l’œuf : simple précaution d’emploi pour le ROR (pas une contre-indication).');
+    it.priseEnCharge = 'Vaccin du calendrier : pris en charge (65 %, 100 % jusqu’à 17 ans révolus).';
+    return it;
+  }
+
+  /* --------------------------------------------------- Varicelle */
+  function evalVaricelle(c) {
+    if (c.age < 11) return null;
+    const h = c.h.varicelle || {};
+    if (h.antecedent === 'oui') return item('varicelle', 'non_indique', { raisons: ['Antécédent clinique de varicelle.'] });
+    if (h.serologie === 'pos') return item('varicelle', 'non_indique', { raisons: ['Sérologie varicelle positive.'] });
+    const doses = +h.doses || 0;
+    if (doses >= 2) return item('varicelle', 'a_jour', { raisons: ['2 doses documentées.'] });
+    const ind = [];
+    if (c.age >= 12 && c.age <= 18) ind.push('adolescent de 12 à 18 ans sans antécédent (ou histoire douteuse)');
+    if (c.femmeProcreer) ind.push('femme en âge de procréer sans antécédent' + (c.e.projetGrossesse ? ', avec projet de grossesse' : ''));
+    if (c.r.postPartum) ind.push('suites d’une première grossesse');
+    const seroNeg = h.serologie === 'neg';
+    const indSero = [];
+    if (c.r.entourageImmunodep) indSero.push('contact étroit avec une personne immunodéprimée');
+    if (c.r.proSante || c.r.proPetiteEnfance) indSero.push('professionnel de santé ou de la petite enfance');
+    if (c.r.attenteGreffe) indSero.push('attente de greffe d’organe solide (dans les 6 mois)');
+    let contact = false;
+    if (c.r.contactVaricelle && c.age > 12 && !c.ID) { ind.push('contact avec un cas de varicelle ou de zona (dans les 3 jours)'); contact = true; }
+    if (!ind.length && !indSero.length) return item('varicelle', 'non_indique', { raisons: ['Pas d’indication : la vaccination généralisée contre la varicelle n’est pas recommandée.'] });
+    const it = item('varicelle', 'recommande', { schema: '2 doses espacées de 4 à 8 semaines (Varivax) ou de 6 à 10 semaines (Varilrix)', refs: ['Calendrier 2026 §2.19'] });
+    ind.concat(indSero).forEach(x => it.raisons.push('Indication : ' + x + '.'));
+    if (!ind.length && !seroNeg) { it.status = 'propose'; it.alertes.push('Pour cette indication, la vaccination concerne les personnes dont la sérologie est négative : contrôler la sérologie.'); }
+    else if (ind.length && !contact && !seroNeg) it.alertes.push('Un contrôle sérologique préalable peut être pratiqué.');
+    it.doseRang = doses + 1; it.totalDoses = 2; it.doseLabel = rang(doses + 1) + ' sur 2';
+    const last = D.parse(h.dernier);
+    const pr = produitsDisponibles(['varicelle'], c); it.produits = pr.ok; it.exclus = pr.exclus;
+    if (doses === 1 && last) {
+      const p0 = pr.ok[0]; const mini = p0 && p0.intervalle ? p0.intervalle[0] : 28;
+      if (D.days(last, c.today) < mini) { it.status = 'en_cours'; it.prochaine = D.addDays(last, mini); it.prochaineNote = '2e dose (intervalle minimal selon le vaccin)'; }
+    }
+    if (doses === 0) { it.prochaine = D.addDays(c.today, 28); it.prochaineNote = '2e dose : 4 à 8 semaines (Varivax) ou 6 à 10 semaines (Varilrix) plus tard'; }
+    it.alertes.push('Vaccin vivant : éviter toute grossesse dans le mois suivant ; en cas d’éruption généralisée, éviter le contact avec les immunodéprimés pendant 10 jours.');
+    it.priseEnCharge = 'Pris en charge (65 %) dans les indications du calendrier.';
+    return it;
+  }
+
+  /* --------------------------------------------------------- HPV */
+  function evalHPV(c) {
+    const A = c.age;
+    if (A < 11) return null;
+    const h = c.h.hpv || {};
+    const doses = +h.doses || 0;
+    const brand = h.vaccin === 'cervarix' ? 'cervarix' : 'gardasil9';
+    const first = D.parse(h.premiere), last = D.parse(h.dernier);
+    const ageFirst = doses > 0 && first ? Math.floor(ageAtDate(c, first)) : A;
+    if (doses === 0 && A > 26) return item('hpv', 'non_indique', { raisons: ['Au-delà de 26 ans révolus : pas de recommandation de rattrapage.'] });
+    let total, sch;
+    if (brand === 'cervarix') {
+      total = ageFirst <= 14 ? 2 : 3;
+      sch = ageFirst <= 14 ? 'Cervarix (poursuite de schéma) : 2 doses à 6 mois d’intervalle' : 'Cervarix (poursuite de schéma) : 3 doses à 0, 1 et 6 mois (jusqu’à 19 ans révolus)';
+    } else {
+      total = ageFirst <= 14 ? 2 : 3;
+      sch = ageFirst <= 14 ? 'Gardasil 9 initié entre 11 et 14 ans révolus : 2 doses espacées de 5 à 13 mois' : 'Gardasil 9 initié entre 15 et 26 ans révolus : 3 doses à 0, 2 et 6 mois (les 3 doses en moins d’un an)';
+    }
+    if (doses >= total) return item('hpv', 'a_jour', { raisons: ['Schéma complet (' + doses + ' doses).'] });
+    const it = item('hpv', 'recommande', { schema: sch, refs: ['Calendrier 2026 §2.11'] });
+    it.doseRang = doses + 1; it.totalDoses = total; it.doseLabel = rang(doses + 1) + ' sur ' + total;
+    if (doses === 0) it.raisons.push(A <= 14 ? 'Vaccination recommandée pour toutes les filles et tous les garçons de 11 à 14 ans révolus.' : 'Rattrapage recommandé pour les jeunes femmes et jeunes hommes de 15 à 26 ans révolus non vaccinés.');
+    else it.raisons.push('Schéma en cours : ' + doses + ' dose(s) reçue(s) ; il n’y a pas de contre-indication à compléter un schéma incomplet.');
+    // date minimale de la dose suivante
+    let mini = null;
+    if (doses >= 1 && last) {
+      if (total === 2) mini = D.addMonths(first || last, brand === 'cervarix' ? 6 : 5);
+      else if (doses === 1) mini = D.addMonths(last, 1);
+      else mini = D.addMonths(last, 3);
+      if (mini > c.today) { it.status = 'en_cours'; it.prochaine = mini; it.prochaineNote = rang(doses + 1) + ' à partir de cette date'; }
+    }
+    if (it.status !== 'en_cours' && doses + 1 < total) {
+      if (total === 2) { it.prochaine = D.addMonths(c.today, 6); it.prochaineNote = '2e dose entre 5 et 13 mois après la 1re'; }
+      else if (doses === 0) { it.prochaine = D.addMonths(c.today, 2); it.prochaineNote = '2e dose à M2, 3e dose à M6'; }
+      else { const ref = first || c.today; it.prochaine = D.max(D.addMonths(ref, 6), D.addMonths(c.today, 3)); it.prochaineNote = '3e dose à M6 (au moins 3 mois après la 2e)'; }
+    }
+    if (brand === 'cervarix') {
+      if (c.sexe !== 'F') { it.status = 'orienter'; it.raisons.push('Cervarix est réservé aux filles : avis médical.'); }
+      if (A > 19) it.alertes.push('Cervarix : schéma recommandé jusqu’à 19 ans révolus — avis médical pour poursuivre au-delà.');
+      it.alertes.push('Les vaccins HPV ne sont pas interchangeables : poursuivre avec Cervarix.');
+    } else if (doses > 0) it.alertes.push('Les vaccins HPV ne sont pas interchangeables : poursuivre avec Gardasil 9.');
+    if (A > 26 && doses > 0) it.alertes.push('Patient au-delà de 26 ans révolus : poursuite d’un schéma débuté avant, à apprécier.');
+    if (c.pregnant) { it.status = 'differer'; it.raisons.push('Grossesse : la vaccination HPV est à reporter après la grossesse.'); }
+    const pr = produitsDisponibles(['hpv'], c, { only: [brand], continuation: brand === 'cervarix' }); it.produits = pr.ok; it.exclus = pr.exclus;
+    it.alertes.push('La vaccination ne remplace pas le dépistage du cancer du col de l’utérus (dès 25 ans).');
+    it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 % dans les indications remboursables.';
+    return it;
+  }
+
+  /* ---------------------------------------------- Méningo ACWY / B */
+  function risqueIIM(c) { return c.r.asplenie || c.r.complement || c.r.greffeCSH || c.r.entourageIIM || c.r.laboMeningo; }
+
+  function evalMenACWY(c) {
+    const A = c.age; if (A < 11) return null;
+    const h = c.h.menacwy || {};
+    const last = D.parse(h.dernier);
+    const lastAge = last ? ageAtDate(c, last) : null;
+    const prods = () => produitsDisponibles(['menacwy'], c);
+    if (risqueIIM(c)) {
+      if (last && D.ageExact(last, c.today) < 5) return item('menacwy', 'a_jour', { raisons: ['Personne à risque d’IIM : dernière dose le ' + D.fr(last) + '.'], prochaine: D.addYears(last, 5), prochaineNote: 'rappel tous les 5 ans tant que le risque persiste' });
+      const it = item('menacwy', 'recommande', { schema: '1 dose de vaccin tétravalent conjugué, rappel tous les 5 ans si le risque persiste (associer la vaccination contre le méningocoque B)', doseLabel: last ? 'Rappel (5 ans)' : 'Dose unique', refs: ['Calendrier 2026 §2.10'] });
+      it.raisons.push('Situation à risque élevé d’infection invasive à méningocoque (asplénie, déficit du complément / traitement anti-complément, greffe de CSH, entourage familial d’une personne à risque…).');
+      it.prochaine = D.addYears(c.today, 5); it.prochaineNote = 'rappel dans 5 ans si le risque persiste';
+      const pr = prods(); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.priseEnCharge = 'Pris en charge dans les indications du calendrier.';
+      return it;
+    }
+    if (A <= 24) {
+      if (lastAge != null && lastAge >= 11) return item('menacwy', 'a_jour', { raisons: ['Dose d’adolescent reçue le ' + D.fr(last) + '.'] });
+      const it = item('menacwy', 'recommande', { schema: '1 dose unique (Nimenrix, MenQuadfi ou Menveo)', doseLabel: 'Dose unique', refs: ['Calendrier 2026 §2.10'] });
+      it.raisons.push(A <= 14 ? 'Recommandée chez tous les adolescents de 11 à 14 ans, indépendamment du statut vaccinal antérieur (y compris si vacciné contre le méningocoque C ou ACWY avant 11 ans).' : 'Rattrapage recommandé entre 15 et 24 ans révolus pour les personnes non vaccinées à l’adolescence.');
+      const pr = prods(); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 %.';
+      return it;
+    }
+    return item('menacwy', 'non_indique', { raisons: ['Au-delà de 24 ans, pas d’indication en dehors des situations à risque ou autour d’un cas.'] });
+  }
+
+  function evalMenB(c) {
+    const A = c.age; if (A < 11) return null;
+    const h = c.h.menb || {};
+    const doses = +h.doses || 0;
+    const brand = h.vaccin === 'trumenba' ? 'trumenba' : (h.vaccin === 'bexsero' ? 'bexsero' : null);
+    const last = D.parse(h.dernier);
+    const risk = risqueIIM(c);
+    if (!risk && !(A >= 15 && A <= 24) && doses === 0) return item('menb', 'non_indique', { raisons: ['Pas d’indication en dehors des situations à risque (et de la proposition aux 15–24 ans).'] });
+    const total = brand === 'trumenba' ? (risk ? 3 : 2) : 2;
+    const sch = brand === 'trumenba' ? (risk ? 'Trumenba : 3 doses (M0, M1, puis ≥ 4 mois après la 2e)' : 'Trumenba : 2 doses à 6 mois d’intervalle') : (brand === 'bexsero' ? 'Bexsero : 2 doses espacées d’au moins 1 mois' : 'Bexsero : 2 doses à ≥ 1 mois d’intervalle — ou Trumenba : 2 doses à 6 mois (3 doses M0, M1, M5 chez les personnes à risque)');
+    if (doses >= total) {
+      if (risk) {
+        if (last && D.ageExact(last, c.today) < 5) return item('menb', 'a_jour', { raisons: ['Primovaccination complète.'], prochaine: D.addYears(last, 5), prochaineNote: 'rappel tous les 5 ans si le risque persiste' });
+        const it = item('menb', 'recommande', { schema: 'Rappel tous les 5 ans chez les personnes à risque', doseLabel: 'Rappel (5 ans)', refs: ['Calendrier 2026 §2.10'] });
+        it.raisons.push('Personne à risque élevé d’IIM : rappel recommandé tous les 5 ans.');
+        const pr = produitsDisponibles(['menb'], c, { only: brand ? [brand] : null }); it.produits = pr.ok; it.exclus = pr.exclus;
+        return it;
+      }
+      return item('menb', 'a_jour', { raisons: ['Schéma complet.'] });
+    }
+    const it = item('menb', risk ? 'recommande' : 'propose', { schema: sch, refs: ['Calendrier 2026 §2.10'] });
+    if (risk) it.raisons.push('Situation à risque élevé d’infection invasive à méningocoque : vaccination recommandée (rappel tous les 5 ans).');
+    else it.raisons.push('Peut être proposée aux 15–24 ans révolus qui le souhaitent (remboursée) ; la HAS ne recommande pas de l’élargir à tous (protection courte, 3 à 5 ans).');
+    it.doseRang = doses + 1; it.totalDoses = total; it.doseLabel = rang(doses + 1) + ' sur ' + total;
+    if (brand) it.alertes.push('Bexsero et Trumenba ne sont pas interchangeables : poursuivre avec ' + (brand === 'bexsero' ? 'Bexsero' : 'Trumenba') + '.');
+    if (doses > 0 && last) {
+      const mini = brand === 'trumenba' ? (total === 2 ? D.addMonths(last, 6) : (doses === 1 ? D.addMonths(last, 1) : D.addMonths(last, 4))) : D.addMonths(last, 1);
+      if (mini > c.today) { it.status = 'en_cours'; it.prochaine = mini; it.prochaineNote = rang(doses + 1) + ' à partir de cette date'; }
+    } else if (doses + 1 < total || doses === 0) { it.prochaine = D.addMonths(c.today, brand === 'trumenba' && !risk ? 6 : 1); it.prochaineNote = '2e dose (selon le vaccin choisi : ≥ 1 mois Bexsero, 6 mois Trumenba)'; }
+    const pr = produitsDisponibles(['menb'], c, { only: brand ? [brand] : null }); it.produits = pr.ok; it.exclus = pr.exclus;
+    it.priseEnCharge = 'Pris en charge (65 %) dans les indications du calendrier.';
+    return it;
+  }
+
+  /* --------------------------------------------------- Hépatite B */
+  function risqueHB(c) {
+    const r = c.r; const l = [];
+    if (r.partenairesMultiples) l.push('partenaires sexuels multiples / IST');
+    if (r.udiv) l.push('usage de drogues par voie parentérale ou intranasale');
+    if (r.entourageVHB) l.push('entourage ou partenaire d’une personne porteuse du VHB');
+    if (r.hepatopathie) l.push('hépatopathie chronique');
+    if (r.vih || r.vhc) l.push('infection par le VIH ou le VHC');
+    if (r.attenteGreffe) l.push('candidat à une greffe');
+    if (r.institution) l.push('institution psychiatrique / structure pour personnes handicapées');
+    if (r.detenu) l.push('personne détenue');
+    if (r.proSante) l.push('professionnel de santé (obligation d’immunisation)');
+    if (r.proExposeSang) l.push('activité exposant au sang / produits biologiques');
+    return l;
+  }
+
+  function evalHepB(c) {
+    const A = c.age; if (A < 11) return null;
+    const h = c.h.hepb || {};
+    if (h.immun) return item('hepb', 'a_jour', { raisons: ['Immunisation documentée (anti-HBs ≥ 10 UI/L).'] });
+    const doses = +h.doses || 0;
+    const two = h.schema2 === true;
+    const complete = doses >= 3 || (two && doses >= 2);
+    if (complete) {
+      const it = item('hepb', 'a_jour', { raisons: ['Schéma complet (' + doses + ' doses) — pas de rappel systématique.'] });
+      if (c.r.proSante) it.alertes.push('Professionnel de santé : apporter la preuve de l’immunisation (anti-HBs ≥ 10 UI/L).');
+      return it;
+    }
+    const risks = risqueHB(c);
+    if (c.r.dialyse || (c.ID && risks.length)) return item('hepb', 'orienter', { raisons: ['Insuffisance rénale chronique dialysée ou immunodépression exposée : schéma renforcé (40 µg, M0 M1 M2 M6) et suivi sérologique — avis médical.'], refs: ['Calendrier 2026 §2.8'] });
+    let it;
+    const last = D.parse(h.dernier), first = D.parse(h.premiere);
+    if (A <= 15) {
+      it = item('hepb', 'recommande', { refs: ['Calendrier 2026 §2.8'] });
+      it.raisons.push('Rattrapage recommandé chez tous les enfants et adolescents jusqu’à 15 ans révolus non (ou incomplètement) vaccinés.');
+      if (doses === 0) {
+        it.schema = '11–15 ans révolus : 2 doses d’Engerix B 20 µg à 6 mois d’intervalle (en l’absence de risque élevé d’exposition entre les 2 doses), ou 3 doses (M0, M1, M6) avec Engerix B 10 µg / HBVaxPro 5 µg';
+        it.totalDoses = risks.length ? 3 : 2; it.doseRang = 1; it.doseLabel = '1re dose';
+        it.prochaine = D.addMonths(c.today, risks.length ? 1 : 6); it.prochaineNote = risks.length ? '2e dose à M1, 3e à M6' : '2e dose à M6 (schéma 2 doses Engerix B 20 µg) — à M1 si schéma 3 doses';
+      }
+    } else {
+      if (!risks.length) {
+        if (doses > 0) { it = item('hepb', 'recommande', { refs: ['Calendrier 2026 §2.8'] }); it.raisons.push('Schéma débuté et incomplet : compléter le schéma.'); }
+        else return item('hepb', 'non_indique', { raisons: ['Adulte sans facteur de risque d’exposition : pas d’indication.'] });
+      } else {
+        it = item('hepb', 'recommande', { refs: ['Calendrier 2026 §2.8'] });
+        it.raisons.push('Exposition à un risque : ' + risks.join(' ; ') + '.');
+      }
+      if (doses === 0) {
+        it.schema = 'Adulte : Engerix B 20 µg, 3 doses à M0, M1, M6 (≥ 5 mois entre la 2e et la 3e). Schéma accéléré possible si protection rapide nécessaire : J0, J7, J21 + rappel à 12 mois';
+        it.totalDoses = 3; it.doseRang = 1; it.doseLabel = '1re dose sur 3'; it.prochaine = D.addMonths(c.today, 1); it.prochaineNote = '2e dose à M1, 3e dose à M6';
+      }
+      if (c.r.proSante) it.alertes.push('Obligation d’immunisation : contrôler les anti-HBs 4 à 8 semaines après la dernière dose.');
+    }
+    if (doses > 0) {
+      const tot = two ? 2 : 3;
+      it.totalDoses = tot; it.doseRang = doses + 1; it.doseLabel = rang(doses + 1) + ' sur ' + tot;
+      it.schema = it.schema || (two ? 'Schéma 2 doses (Engerix B 20 µg, 11–15 ans) : 2e dose 6 mois après la 1re' : 'Schéma 3 doses : M0, M1, M6 (≥ 1 mois entre D1 et D2, ≥ 5 mois entre D2 et D3)');
+      let mini = null;
+      if (last) mini = two ? D.addMonths(last, 6) : (doses === 1 ? D.addMonths(last, 1) : D.max(D.addMonths(last, 5), first ? D.addMonths(first, 6) : null));
+      if (mini && mini > c.today) { it.status = 'en_cours'; it.prochaine = mini; it.prochaineNote = rang(doses + 1) + ' à partir de cette date'; }
+      else if (!two && doses === 1) { it.prochaine = D.addMonths(c.today, 5); it.prochaineNote = '3e dose au moins 5 mois après la 2e'; }
+    }
+    const only = A <= 15 ? (two ? ['engerixb20'] : ['engerixb20', 'engerixb10', 'hbvaxpro5']) : ['engerixb20'];
+    const pr = produitsDisponibles(['hepb'], c, { only }); it.produits = pr.ok; it.exclus = pr.exclus;
+    if (A <= 15 && doses === 0) it.alertes.push('Schéma à 2 doses uniquement avec Engerix B 20 µg ; avec Engerix B 10 µg ou HBVaxPro 5 µg, 3 doses (M0, M1, M6).');
+    it.priseEnCharge = 'Vaccin du calendrier : pris en charge à 65 %.';
+    return it;
+  }
+
+  /* --------------------------------------------------- Hépatite A */
+  function evalHepA(c) {
+    const A = c.age; if (A < 11) return null;
+    const r = c.r; const ind = [];
+    if (r.hsh) ind.push('hommes ayant des relations sexuelles avec des hommes');
+    if (r.hepatopathie || r.mucoviscidose) ind.push('mucoviscidose / pathologie hépatobiliaire susceptible d’évoluer vers une hépatopathie chronique');
+    if (r.institution) ind.push('jeune accueilli en établissement pour l’enfance et la jeunesse handicapées');
+    if (r.proCreche) ind.push('professionnel s’occupant d’enfants n’ayant pas l’âge de la propreté');
+    if (r.proEauxUsees) ind.push('professionnel du traitement des eaux usées et des égouts');
+    if (r.proRestauration) ind.push('préparation alimentaire en restauration collective');
+    if (r.entourageVHA) ind.push('entourage familial d’un cas d’hépatite A (dans les 14 jours suivant les premiers signes du cas)');
+    const h = c.h.hepa || {}; const doses = +h.doses || 0; const last = D.parse(h.dernier);
+    if (!ind.length) {
+      if (c.e.voyage) return item('hepa', 'orienter', { raisons: ['Vaccination du voyageur : hors du champ de la prescription officinale (recommandations aux voyageurs du HCSP, hors calendrier) — orienter vers un médecin ou un centre de vaccinations internationales.'] });
+      return item('hepa', 'non_indique', { raisons: ['Pas d’indication hors situations à risque.'] });
+    }
+    if (doses >= 2) return item('hepa', 'a_jour', { raisons: ['2 doses documentées.'] });
+    const it = item('hepa', 'recommande', { schema: '1 dose puis 1 rappel 6 à 12 mois plus tard (jusqu’à 36 mois pour Avaxim 160, 5 ans pour Havrix)', refs: ['Calendrier 2026 §2.7'] });
+    ind.forEach(x => it.raisons.push('Indication : ' + x + '.'));
+    it.doseRang = doses + 1; it.totalDoses = 2; it.doseLabel = doses ? 'Rappel (2e dose)' : '1re dose';
+    if (doses === 0) { it.prochaine = D.addMonths(c.today, 6); it.prochaineNote = 'rappel 6 à 12 mois plus tard'; }
+    else if (last && D.addMonths(last, 6) > c.today) { it.status = 'en_cours'; it.prochaine = D.addMonths(last, 6); it.prochaineNote = 'rappel à partir de cette date'; }
+    if (c.e.voyage) it.alertes.push('Contexte de voyage : seule l’indication du calendrier justifie la prescription officinale.');
+    if (c.r.entourageVHA) it.alertes.push('Autour d’un cas : vacciner sans sérologie si né après 1945, sans antécédent d’ictère et sans séjour > 1 an en zone d’endémie ; sinon sérologie préalable si compatible avec le délai de 14 jours.');
+    const pr = produitsDisponibles(['hepa'], c); it.produits = pr.ok; it.exclus = pr.exclus;
+    it.priseEnCharge = 'Prise en charge selon les indications remboursables (vérifier ; les vaccins voyageurs ne sont pas remboursés).';
+    return it;
+  }
+
+  /* ---------------------------------------------------- Pneumocoque */
+  function risquePneumo(c) {
+    const r = c.r; const l = [];
+    if (c.ID) l.push('immunodépression (déficit immunitaire, VIH, cancer/hémopathie, greffe, immunosuppresseurs/biothérapie/corticothérapie)');
+    if (r.asplenie) l.push('asplénie ou hyposplénie (dont drépanocytose majeure)');
+    if (r.syndromeNephrotique) l.push('syndrome néphrotique');
+    if (r.cardioCyano || r.insuffCardiaque) l.push('cardiopathie congénitale cyanogène / insuffisance cardiaque');
+    if (r.respChronique) l.push('insuffisance respiratoire chronique, BPCO, emphysème');
+    if (r.asthmeSevere) l.push('asthme sévère sous traitement continu');
+    if (r.insuffRenale) l.push('insuffisance rénale');
+    if (r.hepatopathie) l.push('hépatopathie chronique');
+    if (r.diabeteNonEquilibre) l.push('diabète non équilibré par le simple régime');
+    if (r.brecheMeningee) l.push('brèche ostéoméningée, implant cochléaire');
+    return l;
+  }
+
+  function evalPneumo(c) {
+    const A = c.age; if (A < 11) return null;
+    const h = c.h.pneumo || {};
+    const v13 = D.parse(h.vpc13), v23 = D.parse(h.vpp23), v20 = D.parse(h.vpc20);
+    const risks = risquePneumo(c);
+    if (A >= 18) {
+      if (v20) return item('pneumo', 'a_jour', { raisons: ['VPC20 ou VPC21 reçu le ' + D.fr(v20) + ' — la nécessité d’un rappel n’est pas établie.'] });
+      if (A < 65 && !risks.length) return item('pneumo', 'non_indique', { raisons: ['Adulte de moins de 65 ans sans facteur de risque d’infection à pneumocoque.'] });
+      const it = item('pneumo', 'recommande', { schema: 'Dose unique de Prevenar 20 (VPC20) ou de Capvaxive (VPC21)', doseLabel: 'Dose unique', refs: ['Calendrier 2026 §2.12'] });
+      if (A >= 65) it.raisons.push('Recommandée chez toutes les personnes de 65 ans et plus (dose unique VPC20 ou VPC21).');
+      if (risks.length) it.raisons.push('Risque élevé d’infection à pneumocoque : ' + risks.join(' ; ') + '.');
+      if (v13 && v23) {
+        const lim = D.addYears(v23, 5);
+        it.raisons.push('Déjà vacciné par la séquence VPC13-VPP23 : délai minimal de 5 ans après le VPP23 (' + D.fr(v23) + ').');
+        if (lim > c.today) { it.status = 'en_cours'; it.prochaine = lim; it.prochaineNote = 'VPC20/VPC21 à partir de cette date'; }
+      } else if (v13 || v23) {
+        const prev = D.max(v13, v23); const lim = D.addYears(prev, 1);
+        it.raisons.push('Une seule dose antérieure (' + (v13 ? 'VPC13' : 'VPP23') + ' le ' + D.fr(prev) + ') : VPC20/VPC21 si la vaccination remonte à plus d’un an.');
+        if (lim > c.today) { it.status = 'en_cours'; it.prochaine = lim; it.prochaineNote = 'VPC20/VPC21 à partir de cette date'; }
+      }
+      const pr = produitsDisponibles(['pneumo'], c, { only: ['prevenar20', 'capvaxive'] }); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.priseEnCharge = A >= 65 ? 'Remboursé pour toutes les personnes de 65 ans et plus, même sans comorbidité.' : 'Pris en charge chez les personnes à risque (65 % ; 100 % ALD).';
+      return it;
+    }
+    // 11–17 ans
+    if (!risks.length) return item('pneumo', 'non_indique', { raisons: ['Pas d’indication au-delà de 2 ans en l’absence de facteur de risque.'] });
+    const it = item('pneumo', 'recommande', { schema: '11–17 ans à risque : 1 dose de VPC13 ou VPC15 puis 1 dose de VPP23 au moins 2 mois plus tard ; nouveau VPP23 5 ans après le précédent', refs: ['Calendrier 2026 §2.12'] });
+    it.raisons.push('Risque élevé d’infection à pneumocoque : ' + risks.join(' ; ') + '.');
+    let only;
+    if (!v13 && !v23) { only = ['prevenar13', 'vaxneuvance']; it.doseLabel = 'VPC13/VPC15 (1re étape)'; it.prochaine = D.addMonths(c.today, 2); it.prochaineNote = 'VPP23 au moins 2 mois plus tard'; }
+    else if (v13 && !v23) { only = ['pneumovax']; it.doseLabel = 'VPP23 (2e étape)'; const lim = D.addMonths(v13, 2); if (lim > c.today) { it.status = 'en_cours'; it.prochaine = lim; } }
+    else if (!v13 && v23) { only = ['prevenar13', 'vaxneuvance']; it.doseLabel = 'VPC13/VPC15'; const lim = D.addYears(v23, 1); if (lim > c.today) { it.status = 'en_cours'; it.prochaine = lim; } it.prochaineNote = 'VPC si le VPP23 remonte à plus d’1 an ; nouveau VPP23 ≥ 5 ans après le précédent'; }
+    else { only = ['pneumovax']; it.doseLabel = 'VPP23 (revaccination)'; const lim = D.addYears(v23, 5); if (lim > c.today) { it.status = 'en_cours'; it.prochaine = lim; it.prochaineNote = 'nouveau VPP23 5 ans après le précédent'; } }
+    const pr = produitsDisponibles(['pneumo'], c, { only }); it.produits = pr.ok; it.exclus = pr.exclus;
+    it.priseEnCharge = 'Pris en charge chez les personnes à risque.';
+    return it;
+  }
+
+  /* -------------------------------------------------------- Grippe */
+  function cibleGrippe(c) {
+    const r = c.r; const l = [];
+    if (c.age >= 65) l.push('âge ≥ 65 ans');
+    if (c.pregnant) l.push('grossesse (quel que soit le trimestre)');
+    if (r.respChronique || r.asthmeSevere) l.push('pathologie respiratoire chronique (asthme, BPCO, insuffisance respiratoire, mucoviscidose…)');
+    if (r.mucoviscidose) l.push('mucoviscidose');
+    if (r.insuffCardiaque || r.cardioCyano || r.cardio) l.push('cardiopathie (insuffisance cardiaque grave, valvulopathie grave, trouble du rythme grave, coronaropathie, cardiopathie congénitale)');
+    if (r.avc) l.push('antécédent d’AVC');
+    if (r.neuroMusc) l.push('forme grave d’affection neurologique ou musculaire');
+    if (r.insuffRenale || r.syndromeNephrotique) l.push('néphropathie chronique grave / syndrome néphrotique');
+    if (r.drepanocytose) l.push('drépanocytose');
+    if (r.diabete || r.diabeteNonEquilibre) l.push('diabète de type 1 ou 2');
+    if (r.hepatopathie) l.push('maladie hépatique chronique');
+    if (c.ID) l.push('déficit immunitaire primitif ou acquis (dont VIH, cancer, greffe, immunosuppresseur)');
+    if (r.obesite40) l.push('obésité avec IMC ≥ 40 kg/m²');
+    if (r.etablissement) l.push('séjour en établissement de soins de suite ou médico-social d’hébergement');
+    if (r.entourageNourrissonRisque) l.push('entourage d’un nourrisson de moins de 6 mois à risque de grippe grave');
+    if (r.entourageImmunodep) l.push('entourage d’une personne immunodéprimée');
+    if (r.proSante) l.push('professionnel de santé / en contact régulier avec des personnes à risque');
+    if (r.aideDomicile) l.push('aide à domicile de particulier employeur éligible');
+    if (r.navigant) l.push('personnel navigant / accompagnateur de groupes de voyageurs');
+    if (r.proPorcinAviaire) l.push('professionnel exposé aux virus influenza porcins ou aviaires');
+    return l;
+  }
+
+  function evalGrippe(c) {
+    const A = c.age; if (A < 11) return null;
+    const h = c.h.grippe || {};
+    const camp = c.flu ? 'du ' + D.fr(c.flu[0]) + ' au ' + D.fr(c.flu[1]) : '(dates non paramétrées)';
+    if (h.saison) return item('grippe', 'a_jour', { raisons: ['Déjà vacciné(e) pour la saison en cours.'] });
+    const cible = cibleGrippe(c);
+    const prefer = A >= 65 ? ['efluelda', 'fluad'] : null;
+    const it = item('grippe', cible.length ? 'recommande' : 'propose', { schema: '1 dose annuelle pendant la campagne de vaccination', doseLabel: 'Dose annuelle', honoraire: 'VGP', refs: ['Calendrier 2026 §2.6', 'Mémo AM grippe'] });
+    if (cible.length) {
+      it.raisons.push('Personne à risque de grippe sévère : ' + cible.join(' ; ') + '.');
+      it.priseEnCharge = 'Vaccin pris en charge à 100 % sur bon de prise en charge (EXO 7 prévention) ; injection prise en charge à 70 %.';
+    } else if (A <= 17) {
+      it.raisons.push('Peut être proposée chaque année à tous les enfants de 2 à 17 ans révolus, sans comorbidité.');
+      it.priseEnCharge = 'Vaccin pris en charge à 65 % (bon spécifique « 2–17 ans sans comorbidités », sans EXO 7).';
+    } else {
+      it.raisons.push('Adulte de moins de 65 ans hors cible : vaccination possible à sa demande (le pharmacien peut prescrire le vaccin contre la grippe y compris hors recommandations).');
+      it.priseEnCharge = 'Hors cible : vaccin et injection non pris en charge (à la charge du patient).';
+    }
+    if (A >= 65) it.alertes.push('≥ 65 ans : vaccins Efluelda (haute dose) ou Fluad (adjuvanté) à privilégier ; les vaccins à dose standard restent utilisables.');
+    if (!c.inFlu) { it.status = cible.length ? 'differer' : 'non_indique'; it.raisons.push('Hors période de campagne (' + camp + ').'); if (c.flu && c.today < c.flu[0]) it.prochaine = c.flu[0]; }
+    if (c.allergies.has('oeuf')) { it.status = 'orienter'; it.raisons.push('Allergie aux protéines de l’œuf (ovalbumine) : orienter vers le médecin (mémo AM) ; Flucelvax, produit sur culture cellulaire, ne contient pas d’œuf.'); }
+    const pr = produitsDisponibles(['grippe'], c, { prefer }); it.produits = pr.ok; it.exclus = pr.exclus;
+    return it;
+  }
+
+  /* -------------------------------------------------------- Covid */
+  function cibleCovid(c) {
+    const r = c.r; const l = [];
+    if (c.age >= 65) l.push('âge ≥ 65 ans');
+    if (c.pregnant) l.push('grossesse');
+    if (c.ID) l.push('immunodépression');
+    if (r.htaCompliquee) l.push('hypertension artérielle compliquée');
+    if (r.cardio || r.insuffCardiaque || r.cardioCyano || r.avc) l.push('pathologie cardiaque ou vasculaire');
+    if (r.hepatopathie) l.push('pathologie hépatique');
+    if (r.insuffRenale || r.syndromeNephrotique) l.push('pathologie rénale');
+    if (r.respChronique || r.asthmeSevere || r.mucoviscidose) l.push('pathologie pulmonaire');
+    if (r.diabete || r.diabeteNonEquilibre) l.push('diabète');
+    if (r.obesite || r.obesite40) l.push('obésité');
+    if (r.cancer) l.push('cancer');
+    if (r.greffe) l.push('transplantation');
+    if (r.trisomie21) l.push('trisomie 21');
+    if (r.psy) l.push('troubles psychiatriques ou démence');
+    if (r.etablissement) l.push('résident en EHPAD/USLD ou établissement médico-social');
+    if (r.entourageImmunodep || r.proSante) l.push('entourage ou contacts réguliers de personnes immunodéprimées ou vulnérables (dont professionnels)');
+    return l;
+  }
+
+  function evalCovid(c) {
+    const A = c.age; if (A < 5) return null;
+    const h = c.h.covid || {};
+    const last = D.max(D.parse(h.dose), D.parse(h.infection));
+    const court = A >= 80 || c.ID;
+    const cible = cibleCovid(c);
+    const printemps = A >= 80 || c.ID || c.r.etablissement;
+    const it = item('covid', 'recommande', { schema: A >= 12 ? '1 dose de vaccin adapté (ARNm, ou Nuvaxovid) quel que soit le passé vaccinal' : '5–11 ans : 1 dose de vaccin ARNm dosé pour l’âge (10 µg)', doseLabel: 'Dose de la campagne', honoraire: 'INJ', refs: ['Calendrier 2026 §2.2'] });
+    it.priseEnCharge = 'Vaccin fourni par l’État (gratuit) ; injection prise en charge.';
+    if (c.inFlu) {
+      if (cible.length) it.raisons.push('Vaccination d’automne recommandée : ' + cible.join(' ; ') + '.');
+      else { it.status = 'propose'; it.raisons.push('Hors cible : toute personne qui le souhaite peut recevoir une dose (le pharmacien peut prescrire le vaccin Covid-19 dès 5 ans, y compris hors recommandations).'); }
+    } else if (c.inSpring && printemps) {
+      it.doseLabel = 'Dose de printemps';
+      it.raisons.push('Dose supplémentaire de printemps : ' + (A >= 80 ? '80 ans et plus' : c.ID ? 'immunodépression' : 'résident d’EHPAD/USLD') + '.');
+    } else {
+      it.status = cible.length ? 'differer' : 'non_indique';
+      it.raisons.push('Hors période de campagne de vaccination.' + (printemps ? ' Une dose de printemps est prévue pour cette personne.' : ''));
+    }
+    if (last) {
+      const lim = D.addMonths(last, court ? 3 : 6);
+      if (lim > c.today) { it.status = 'en_cours'; it.prochaine = lim; it.prochaineNote = 'délai minimal de ' + (court ? 3 : 6) + ' mois depuis la dernière dose ou infection'; it.raisons.push('Dernière dose ou infection le ' + D.fr(last) + ' : délai minimal de ' + (court ? '3' : '6') + ' mois non atteint.'); }
+    }
+    if (c.pregnant) it.alertes.push('Femme enceinte : utiliser un vaccin à ARNm.');
+    const pr = produitsDisponibles(['covid'], c); it.produits = pr.ok; it.exclus = pr.exclus;
+    return it;
+  }
+
+  /* --------------------------------------------------------- Zona */
+  function evalZona(c) {
+    const A = c.age; if (A < 18) return null;
+    const h = c.h.zona || {};
+    if (!(A >= 65 || c.ID)) return item('zona', 'non_indique', { raisons: ['Recommandée à partir de 65 ans chez l’immunocompétent, ou dès 18 ans en cas d’immunodépression.'] });
+    const doses = +h.doses || 0;
+    if (doses >= 2) return item('zona', 'a_jour', { raisons: ['Schéma Shingrix complet — la nécessité d’un rappel n’est pas établie.'] });
+    const it = item('zona', 'recommande', { schema: 'Shingrix : 2 doses espacées de 2 mois (M0, M2) ; 2e dose possible entre 2 et 6 mois', refs: ['Calendrier 2026 §2.21'] });
+    it.raisons.push(c.ID ? 'Personne immunodéprimée de 18 ans et plus : vaccination recommandée (vaccin inactivé, prescriptible par le pharmacien).' : 'Recommandée chez les adultes immunocompétents de 65 ans et plus, y compris après un zona ou une vaccination par Zostavax.');
+    it.doseRang = doses + 1; it.totalDoses = 2; it.doseLabel = rang(doses + 1) + ' sur 2';
+    const last = D.parse(h.dernier);
+    if (doses === 1 && last) {
+      const mini = D.addMonths(last, c.ID && c.r.avantImmunosup ? 1 : 2);
+      if (mini > c.today) { it.status = 'en_cours'; it.prochaine = mini; it.prochaineNote = '2e dose (entre 2 et 6 mois après la 1re)'; }
+      else if (D.addMonths(last, 6) < c.today) it.alertes.push('Plus de 6 mois depuis la 1re dose : administrer la 2e dose sans recommencer le schéma.');
+    } else { it.prochaine = D.addMonths(c.today, 2); it.prochaineNote = '2e dose 2 mois plus tard (jusqu’à 6 mois)'; }
+    const ep = D.max(D.parse(h.episode), D.parse(h.zostavax));
+    if (doses === 0 && ep && D.addYears(ep, 1) > c.today) {
+      if (c.ID) it.alertes.push('Zona ou Zostavax il y a moins d’un an (' + D.fr(ep) + ') : chez l’immunodéprimé, ce délai peut être réduit selon la situation (avis médical).');
+      else { it.status = 'en_cours'; it.prochaine = D.addYears(ep, 1); it.prochaineNote = '1re dose au moins 1 an après le zona / Zostavax'; it.raisons.push('Antécédent de zona ou vaccination Zostavax le ' + D.fr(ep) + ' : respecter un délai d’au moins 1 an.'); }
+    }
+    if (c.ID && c.r.avantImmunosup) it.alertes.push('Avant un traitement immunosuppresseur : vacciner le plus tôt possible (schéma complet idéalement 14 jours avant), intervalle réductible à 1 mois.');
+    if (c.pregnant) { it.status = 'differer'; it.raisons.push('Grossesse : par précaution, ne pas utiliser Shingrix pendant la grossesse.'); }
+    if (c.e.allaitement) it.alertes.push('Allaitement : à évaluer au cas par cas (décision médicale partagée).');
+    const pr = produitsDisponibles(['zona'], c); it.produits = pr.ok; it.exclus = pr.exclus;
+    it.priseEnCharge = 'Shingrix pris en charge à 65 % (≥ 65 ans et immunodéprimés ≥ 18 ans).';
+    return it;
+  }
+
+  /* ---------------------------------------------------------- VRS */
+  function evalVRS(c) {
+    const A = c.age; if (A < 18) return null;
+    const h = c.h.vrs || {};
+    if (c.pregnant) {
+      const base = { refs: ['Calendrier 2026 §2.13 et §2.22.2'] };
+      if (c.ID) return item('vrs', 'non_indique', Object.assign(base, { raisons: ['Femme enceinte immunodéprimée : vaccination non recommandée, privilégier l’anticorps monoclonal chez le nouveau-né.'] }));
+      if (h.grossessePrec) return item('vrs', 'non_indique', Object.assign(base, { raisons: ['Déjà vaccinée lors d’une grossesse antérieure : privilégier l’anticorps monoclonal (nirsévimab) chez le nouveau-né.'] }));
+      if (D.parse(h.date)) return item('vrs', 'a_jour', Object.assign(base, { raisons: ['Abrysvo déjà reçu pendant cette grossesse.'] }));
+      const it = item('vrs', 'recommande', Object.assign(base, { schema: '1 dose d’Abrysvo entre 32 et 36 SA, en amont et pendant la période épidémique', doseLabel: 'Dose unique (grossesse)' }));
+      it.raisons.push('Protection du nouveau-né et du nourrisson de moins de 6 mois contre les formes graves de bronchiolite (alternative : anticorps monoclonal chez le nourrisson ; choix des parents).');
+      if (c.sa == null) it.alertes.push('Préciser le terme (SA) : la vaccination se fait entre 32 et 36 SA.');
+      else if (c.sa < 32) { it.status = 'en_cours'; it.prochaine = D.addDays(c.today, (32 - c.sa) * 7); it.prochaineNote = 'à partir de 32 SA'; it.raisons.push('Terme actuel ' + c.sa + ' SA : vaccination à partir de 32 SA.'); }
+      else if (c.sa > 36) { it.status = 'non_indique'; it.raisons.push('Au-delà de 36 SA : immunisation du nouveau-né par anticorps monoclonal.'); }
+      if (!c.inVrsP) { if (it.status === 'recommande') it.status = 'differer'; it.raisons.push('Hors période de campagne VRS (femmes enceintes).'); }
+      const dt = D.parse((c.h.dtp || {}).dernier);
+      if (dt && D.days(dt, c.today) < 14 && D.days(dt, c.today) >= 0) { if (it.status === 'recommande') it.status = 'differer'; it.prochaine = D.addDays(dt, 14); it.raisons.push('dTcaP reçu le ' + D.fr(dt) + ' : intervalle minimal de 2 semaines avec Abrysvo.'); }
+      it.alertes.push('Si la naissance survient moins de 14 jours après la vaccination ou est prématurée : immunisation du nouveau-né par anticorps monoclonal.');
+      const pr = produitsDisponibles(['vrs'], c, { only: ['abrysvo'] }); it.produits = pr.ok; it.exclus = pr.exclus;
+      it.priseEnCharge = 'Abrysvo pris en charge chez la femme enceinte (facturation : code prescripteur pharmacien 291990869).';
+      it.codePrescripteur = true;
+      return it;
+    }
+    const risque = A >= 65 && (c.r.respChronique || c.r.insuffCardiaque || c.r.cardio);
+    if (!(A >= 75 || risque)) return item('vrs', 'non_indique', { raisons: ['Recommandée à partir de 75 ans, ou dès 65 ans en cas de pathologie respiratoire ou cardiaque chronique.'] });
+    if (D.parse(h.date)) return item('vrs', 'a_jour', { raisons: ['Dose unique déjà reçue le ' + D.fr(h.date) + ' — la nécessité d’un rappel n’est pas établie.'] });
+    const it = item('vrs', 'recommande', { schema: '1 dose unique (Abrysvo, Arexvy ou mResvia), en amont de la période épidémique', doseLabel: 'Dose unique', refs: ['Calendrier 2026 §2.13'] });
+    it.raisons.push(A >= 75 ? 'Recommandée chez toutes les personnes de 75 ans et plus.' : 'Personne de 65 ans et plus avec pathologie respiratoire (BPCO…) ou cardiaque (insuffisance cardiaque…) susceptible de décompenser.');
+    it.alertes.push('Co-administration possible avec les vaccins grippe et Covid-19.');
+    const pr = produitsDisponibles(['vrs'], c); it.produits = pr.ok; it.exclus = pr.exclus;
+    it.priseEnCharge = 'Non pris en charge par l’Assurance Maladie à ce jour : vaccin et injection à la charge du patient.';
+    return it;
+  }
+
+  /* ------------------------------------------------ autres (info) */
+  function evalAutres(c) {
+    const l = [];
+    if (c.e.voyage) l.push(item('autres', 'orienter', { label: 'Vaccins du voyageur (fièvre jaune, typhoïde, encéphalites, rage, hépatite A « voyage »…)', raisons: ['Les recommandations aux voyageurs (HCSP) ne font pas partie du calendrier : hors du champ de la prescription et de l’administration à l’officine. Orienter vers un centre de vaccinations internationales.'] }));
+    if (c.r.proExposeLepto) l.push(item('autres', 'orienter', { label: 'Leptospirose', raisons: ['Vaccination proposée par le médecin du travail ou après expertise du risque : à réaliser sur prescription médicale.'] }));
+    if (c.r.proExposeRage) l.push(item('autres', 'orienter', { label: 'Rage (pré-exposition)', raisons: ['Indication professionnelle après évaluation du risque par l’employeur (chiroptérologues, laboratoires) : très rare à l’officine, avis médical.'] }));
+    return l;
+  }
+
+  /* ------------------------------------------ règles transversales */
+  function appliquerSecurite(it, c) {
+    if (!it) return it;
+    const prescr = s => ['recommande', 'propose', 'en_cours'].includes(s);
+    // Hors compétence d'âge
+    if (it.groupe !== 'covid' && c.age < 11) { it.status = 'orienter'; it.raisons.unshift('Prescription par le pharmacien réservée aux personnes de 11 ans et plus (Covid-19 : dès 5 ans).'); return it; }
+    if (!prescr(it.status) && it.status !== 'differer') return it;
+    // Vaccins vivants
+    if (it.vivant) {
+      if (c.ID) { it.status = 'orienter'; it.raisons.unshift('Vaccin vivant atténué : contre-indiqué en cas d’immunodépression, et exclu du champ de prescription du pharmacien chez l’immunodéprimé — orienter vers le médecin.'); return it; }
+      if (c.pregnant) { it.status = 'ci'; it.raisons.unshift('Vaccin vivant atténué : contre-indiqué pendant la grossesse (à réaliser après l’accouchement, même en cas d’allaitement).'); return it; }
+      if (c.r.vih) { it.status = 'orienter'; it.raisons.unshift('Personne vivant avec le VIH : vaccin vivant possible seulement si le taux de CD4 le permet — avis médical.'); return it; }
+      const lv = D.parse(c.e.vivantRecent);
+      if (lv && D.days(lv, c.today) > 0 && D.days(lv, c.today) < 28) { it.status = 'differer'; it.prochaine = D.addDays(lv, 28); it.raisons.unshift('Vaccin vivant reçu le ' + D.fr(lv) + ' : les vaccins vivants viraux s’administrent le même jour ou à 4 semaines d’intervalle.'); }
+    }
+    // Anaphylaxie
+    if (c.e.anaphylaxie) {
+      const v = c.e.anaphylaxieVaccin || 'inconnu';
+      if (v === it.groupe || (v === 'hepb' && it.groupe === 'hepb')) { it.status = 'ci'; it.raisons.unshift('Antécédent de réaction anaphylactique à un vaccin de cette valence : contre-indication.'); return it; }
+      if (v === 'inconnu') { it.status = 'orienter'; it.raisons.unshift('Antécédent de réaction allergique sévère à un vaccin non identifié : orienter vers le médecin (bilan allergologique).'); return it; }
+      it.alertes.push('Antécédent d’anaphylaxie à un autre vaccin : vérifier que ce vaccin ne contient pas le composant incriminé (bilan allergologique) ; en cas de doute, orienter.');
+    }
+    // Allergènes : plus aucun produit disponible
+    if (!it.produits.length && it.exclus.length && prescr(it.status)) {
+      const allerg = it.exclus.some(x => /contient/.test(x.raison));
+      it.status = allerg ? 'ci' : 'orienter';
+      it.raisons.unshift(allerg ? 'Toutes les spécialités disponibles contiennent un composant auquel le patient est allergique.' : 'Aucune spécialité adaptée disponible (âge / AMM) : avis médical.');
+      return it;
+    }
+    // SGB post-vaccinal
+    if (c.e.sgb) { it.status = 'orienter'; it.raisons.unshift('Syndrome de Guillain-Barré survenu dans les 6 semaines suivant une vaccination : orienter vers le médecin.'); return it; }
+    // État aigu
+    if ((c.e.fievre || c.e.infectionAigue) && prescr(it.status)) {
+      it.status = 'differer'; it.raisons.unshift('Fièvre > 38 °C ou infection aiguë modérée à sévère ce jour : différer de quelques jours (pas une contre-indication ; un simple rhume ne justifie pas de report).');
+    }
+    // Anticoagulants : voie d'administration
+    if (c.e.anticoag && it.produits.length) {
+      const sc = it.produits.filter(p => p.voies.includes('SC')).map(p => p.nom);
+      if (sc.length) it.alertes.push('Patient sous anticoagulant : préférer la voie sous-cutanée (autorisée par le RCP de ' + sc.join(', ') + ').');
+      const im = it.produits.filter(p => !p.voies.includes('SC')).map(p => p.nom);
+      if (im.length) it.alertes.push('Patient sous anticoagulant — ' + im.join(', ') + ' : IM uniquement → aiguille fine, deltoïde, compression prolongée (≥ 2 min).');
+    }
+    return it;
+  }
+
+  /* --------------------------------------------- évaluation globale */
+  function evaluate(input, settings, todayStr) {
+    const c = buildContext(input, settings, todayStr);
+    const res = { contexte: { age: c.age, today: D.iso(c.today), ID: c.ID, pregnant: c.pregnant, sa: c.sa }, globaux: [], items: [] };
+    if (!c.dob || c.age == null || c.age < 0 || c.age > 120) { res.globaux.push({ niveau: 'bloquant', texte: 'Date de naissance manquante ou invalide.' }); return res; }
+    if (c.age < 5) { res.globaux.push({ niveau: 'bloquant', texte: 'Enfant de moins de 5 ans : aucune vaccination ne peut être prescrite par le pharmacien — orienter vers le médecin, la sage-femme ou la PMI.' }); return res; }
+    if (c.age < 11) res.globaux.push({ niveau: 'info', texte: 'Enfant de 5 à 10 ans : seul le vaccin contre la Covid-19 peut être prescrit par le pharmacien.' });
+    if (c.ID) res.globaux.push({ niveau: 'alerte', texte: 'Immunodépression : vaccins vivants (ROR, varicelle) contre-indiqués et non prescriptibles par le pharmacien ; tous les vaccins inactivés sont possibles.' + (c.corticoID ? ' (Corticothérapie orale > 10 mg/j d’équivalent prednisone depuis plus de 14 jours.)' : '') });
+    if (c.e.fievre || c.e.infectionAigue) res.globaux.push({ niveau: 'alerte', texte: 'Fièvre ou infection aiguë ce jour : reporter l’injection de quelques jours.' });
+    if (c.e.sgb) res.globaux.push({ niveau: 'bloquant', texte: 'Antécédent de syndrome de Guillain-Barré post-vaccinal : orienter vers le médecin.' });
+    if (c.e.anticoag) res.globaux.push({ niveau: 'info', texte: 'Anticoagulant : voie SC si le RCP l’autorise ; sinon IM avec aiguille fine dans le deltoïde et compression prolongée. Pas de précaution particulière sous antiagrégant plaquettaire seul.' });
+    if (c.e.voyage) res.globaux.push({ niveau: 'info', texte: 'Contexte de voyage : les vaccins du voyageur sont exclus de la compétence officinale.' });
+    if (c.pregnant) res.globaux.push({ niveau: 'info', texte: 'Grossesse' + (c.sa != null ? ' (' + c.sa + ' SA)' : '') + ' : vaccins recommandés — coqueluche (dès le 2e trimestre, idéalement 20–36 SA), grippe et Covid-19 (quel que soit le terme), VRS (Abrysvo 32–36 SA pendant la campagne). Vaccins vivants contre-indiqués.' });
+    const fns = [evalDTP, evalGrippe, evalCovid, evalHPV, evalMenACWY, evalMenB, evalROR, evalHepB, evalPneumo, evalZona, evalVRS, evalVaricelle, evalHepA];
+    for (const f of fns) {
+      let it = null;
+      try { it = f(c); } catch (err) { it = item('autres', 'orienter', { label: 'Erreur de calcul (' + f.name + ')', raisons: [String(err && err.message || err)] }); }
+      if (it) res.items.push(appliquerSecurite(it, c));
+    }
+    // Twinrix (hépatites A + B) proposé lorsque les deux vaccinations sont indiquées (≥ 16 ans)
+    const ia = res.items.find(x => x.groupe === 'hepa'), ib = res.items.find(x => x.groupe === 'hepb');
+    if (c.age >= 16 && ia && ib && ['recommande', 'propose'].includes(ia.status) && ['recommande', 'propose'].includes(ib.status) && !(+((c.h.hepa || {}).doses) || +((c.h.hepb || {}).doses))) {
+      const tw = produitsDisponibles(['hepab'], c);
+      [ia, ib].forEach(x => { x.produits = x.produits.concat(tw.ok); x.alertes.push('Hépatites A et B indiquées : Twinrix Adulte (3 doses M0, M1, M6) peut couvrir les deux valences.'); });
+    }
+    evalAutres(c).forEach(x => res.items.push(x));
+    res.items.sort((a, b) => STATUTS[a.status].ordre - STATUTS[b.status].ordre);
+    res.items.forEach(x => { x.prochaineISO = x.prochaine ? D.iso(x.prochaine) : ''; });
+    return res;
+  }
+
+  /* --------------------------------------------- texte de posologie */
+  function posologie(produit, voie, site) {
+    const v = voie === 'SC' ? 'voie sous-cutanée' : 'voie intramusculaire';
+    return '1 dose — 1 injection par ' + v + (site ? ' (' + site + ')' : (voie === 'SC' ? '' : ' (muscle deltoïde)'));
+  }
+
+  root.VP = { D, PRODUITS, ALLERGENES, GROUPES, STATUTS, evaluate, buildContext, prochainRappelDTP, produitsDisponibles, posologie, version: '1.0.0' };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script id="vp-app">
+/* =====================================================================
+   INTERFACE
+   ===================================================================== */
+(function () {
+  'use strict';
+  const { D, PRODUITS, GROUPES, STATUTS, ALLERGENES } = window.VP;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const LS_SET = 'vp_settings_v1', LS_JR = 'vp_journal_v1', LS_PH = 'vp_pharmacien_poste';
+
+  /* date du jour (surcharge possible : ?date=AAAA-MM-JJ pour les tests) */
+  const qsDate = new URLSearchParams(location.search).get('date');
+  const TODAY = (qsDate && D.parse(qsDate)) ? qsDate : D.iso(new Date());
+
+  /* ----------------------------------------------------- paramètres */
+  const DEFAULTS = {
+    revision: 0,
+    officine: { nom: '', adresse: '', cp: '', ville: '', tel: '', email: '', finess: '', numAM: '', logo: '' },
+    pharmaciens: [],
+    campagnes: {
+      grippe: { debut: '2026-10-13', fin: '2027-01-31' },
+      covidPrintemps: { debut: '', fin: '' },
+      vrsGrossesse: { debut: '2026-09-01', fin: '2027-01-31' }
+    },
+    honoraires: { rvaPharmacien: 9.6, rvaPrescrit: 7.5, vgp: 7.5, inj: 7.5, coefDrom: 1.05, codePrescripteur: '291990869' },
+    catalogue: {},
+    journal: { actif: false },
+    pinHash: ''
+  };
+  function merge(base, over) {
+    if (Array.isArray(base)) return Array.isArray(over) ? over : base;
+    if (base && typeof base === 'object') {
+      const o = {};
+      for (const k of new Set([...Object.keys(base), ...Object.keys(over || {})])) o[k] = (over && k in over) ? merge(base[k], over[k]) : base[k];
+      return o;
+    }
+    return over === undefined ? base : over;
+  }
+  function loadSettings() {
+    try { return merge(DEFAULTS, JSON.parse(localStorage.getItem(LS_SET) || '{}')); } catch (e) { return merge(DEFAULTS, {}); }
+  }
+  function saveSettings(bump) {
+    if (bump !== false) SET.revision = (SET.revision || 0) + 1;
+    try { localStorage.setItem(LS_SET, JSON.stringify(SET)); } catch (e) { toast('Enregistrement impossible (stockage du navigateur indisponible)'); }
+  }
+  let SET = loadSettings();
+  let CFG_SOURCE = 'local';
+
+  /* config partagée (serveur) : config.json à côté d'index.html */
+  async function loadShared() {
+    if (!/^https?:/.test(location.protocol)) return;
+    try {
+      const r = await fetch('config.json', { cache: 'no-store' });
+      if (!r.ok) return;
+      const shared = await r.json();
+      if ((shared.revision || 0) > (SET.revision || 0) || !localStorage.getItem(LS_SET)) {
+        SET = merge(DEFAULTS, shared); saveSettings(false); CFG_SOURCE = 'partagée (config.json)';
+        renderHeader(); refresh();
+        toast('Paramètres partagés chargés (révision ' + (shared.revision || 0) + ')');
+      } else CFG_SOURCE = 'locale (config.json disponible, révision ' + (shared.revision || 0) + ')';
+    } catch (e) { /* pas de fichier partagé */ }
+  }
+
+  function hashPin(p) { let h = 5381; for (const ch of 'vp|' + p) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0; return 'h' + h.toString(16); }
+
+  /* --------------------------------------------------------- état */
+  const blankInput = () => ({ patient: {}, entretien: { allergies: {} }, risques: {}, histo: { dtp: { statut: '', coqueluche: true }, ror: {}, varicelle: {}, hpv: {}, menacwy: {}, menb: {}, hepb: {}, hepa: {}, pneumo: {}, grippe: {}, covid: {}, zona: {}, vrs: {} } });
+  const S = { input: blankInput(), result: null, sel: {}, adm: {}, trace: { ordonnancier: true }, step: 1, derog: {} };
+
+  function getPath(o, p) { return p.split('.').reduce((a, k) => (a == null ? undefined : a[k]), o); }
+  function setPath(o, p, v) {
+    const ks = p.split('.'); let a = o;
+    for (let i = 0; i < ks.length - 1; i++) { if (a[ks[i]] == null || typeof a[ks[i]] !== 'object') a[ks[i]] = {}; a = a[ks[i]]; }
+    a[ks[ks.length - 1]] = v;
+  }
+
+  /* ------------------------------------------- formulaires générés */
+  const RISQUES = [
+    ['Pathologies chroniques', [
+      ['respChronique', 'Pathologie respiratoire chronique (asthme, BPCO, insuffisance respiratoire, bronchectasies…)'],
+      ['asthmeSevere', 'Asthme sévère sous traitement continu'], ['mucoviscidose', 'Mucoviscidose'],
+      ['insuffCardiaque', 'Insuffisance cardiaque'], ['cardio', 'Coronaropathie, valvulopathie grave, trouble du rythme grave'],
+      ['cardioCyano', 'Cardiopathie congénitale cyanogène / avec HTAP'], ['htaCompliquee', 'Hypertension artérielle compliquée'],
+      ['avc', 'Antécédent d’AVC'], ['neuroMusc', 'Forme grave d’affection neurologique ou musculaire (myopathie, SLA, myasthénie…)'],
+      ['insuffRenale', 'Insuffisance rénale / néphropathie chronique grave'], ['dialyse', 'Insuffisance rénale chronique dialysée'],
+      ['syndromeNephrotique', 'Syndrome néphrotique'], ['drepanocytose', 'Drépanocytose'],
+      ['diabete', 'Diabète de type 1 ou 2'], ['diabeteNonEquilibre', 'Diabète non équilibré par le simple régime'],
+      ['hepatopathie', 'Hépatopathie chronique (avec ou sans cirrhose)'], ['obesite', 'Obésité (IMC ≥ 30)'], ['obesite40', 'Obésité avec IMC ≥ 40 kg/m²'],
+      ['trisomie21', 'Trisomie 21'], ['psy', 'Troubles psychiatriques ou démence'], ['brecheMeningee', 'Brèche ostéoméningée, implant cochléaire']
+    ]],
+    ['Immunité', [
+      ['deficitImmun', 'Déficit immunitaire primitif ou acquis'], ['cancer', 'Tumeur solide ou hémopathie maligne'],
+      ['greffe', 'Transplantation d’organe solide'], ['greffeCSH', 'Greffe de cellules souches hématopoïétiques'],
+      ['attenteGreffe', 'En attente de greffe'], ['vih', 'Infection par le VIH'], ['vhc', 'Infection par le VHC'],
+      ['asplenie', 'Asplénie ou hyposplénie'], ['complement', 'Déficit du complément / properdine, traitement anti-complément'],
+      ['avantImmunosup', 'Traitement immunosuppresseur prévu prochainement']
+    ]],
+    ['Entourage & contexte familial', [
+      ['postPartum', 'Post-partum (suites de grossesse)'], ['entourageNourrisson', 'Entourage d’un nourrisson de moins de 6 mois (cocooning)'],
+      ['projetParental', 'Futur parent / projet parental'], ['entourageNourrissonRisque', 'Entourage d’un nourrisson < 6 mois à risque de grippe grave'],
+      ['entourageImmunodep', 'Entourage d’une personne immunodéprimée'], ['entourageIIM', 'Entourage familial d’une personne à risque élevé d’IIM'],
+      ['entourageVHB', 'Entourage ou partenaire d’une personne porteuse du VHB'], ['entourageVHA', 'Entourage d’un cas d’hépatite A (< 14 jours)'],
+      ['contactVaricelle', 'Contact avec un cas de varicelle ou de zona (< 3 jours)']
+    ]],
+    ['Mode de vie & hébergement', [
+      ['etablissement', 'Résident EHPAD / USLD / SSR / établissement médico-social'], ['hsh', 'Homme ayant des relations sexuelles avec des hommes'],
+      ['partenairesMultiples', 'Partenaires sexuels multiples, IST en cours ou récente'], ['udiv', 'Usage de drogues injectables ou intranasales'],
+      ['institution', 'Accueil en institution psychiatrique / structure pour personnes handicapées'], ['detenu', 'Personne détenue']
+    ]],
+    ['Profession', [
+      ['proSante', 'Professionnel ou étudiant de santé'], ['proPetiteEnfance', 'Professionnel de la petite enfance'],
+      ['proCreche', 'S’occupe d’enfants n’ayant pas l’âge de la propreté'], ['proEauxUsees', 'Traitement des eaux usées / égouts'],
+      ['proRestauration', 'Préparation alimentaire en restauration collective'], ['proExposeSang', 'Exposé au sang / produits biologiques (secouriste, tatoueur…)'],
+      ['aideDomicile', 'Aide à domicile de particulier employeur éligible'], ['navigant', 'Personnel navigant (avions, croisières), guide de groupes'],
+      ['proPorcinAviaire', 'Exposé aux virus influenza porcins ou aviaires'], ['laboMeningo', 'Laboratoire travaillant sur le méningocoque'],
+      ['proExposeLepto', 'Exposition professionnelle à la leptospirose'], ['proExposeRage', 'Exposition professionnelle à la rage (chiroptérologue…)']
+    ]]
+  ];
+
+  const sel = (p, opts) => '<select data-p="' + p + '">' + opts.map(o => '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>').join('') + '</select>';
+  const num = (p, max) => '<input type="number" min="0" max="' + (max || 5) + '" data-p="' + p + '" data-type="num">';
+  const dat = p => '<input type="date" data-p="' + p + '">';
+  const fld = (l, ctl, hint, show) => '<div class="f"' + (show ? ' data-show="' + show + '"' : '') + '><label>' + l + '</label>' + ctl + (hint ? '<span class="hint">' + hint + '</span>' : '') + '</div>';
+  const cb = (p, l) => '<label class="chk"><input type="checkbox" data-p="' + p + '"> ' + l + '</label>';
+  const HISTO = [
+    ['Diphtérie – tétanos – polio – coqueluche', [
+      fld('Statut', sel('histo.dtp.statut', [['', '—'], ['connu', 'Connu (date du dernier rappel)'], ['inconnu', 'Inconnu'], ['jamais', 'Jamais vacciné']])),
+      fld('Date du dernier rappel', dat('histo.dtp.dernier'), 'DTP, dTP, DTCaP ou dTcaP'),
+      fld('Ce rappel comportait la coqueluche', sel('histo.dtp.coqueluche', [['true', 'Oui / ne sait pas'], ['false', 'Non (dTP seul)']])),
+      fld('Rappel des 6 ans', sel('histo.dtp.rappel6', [['', '—'], ['oui', 'Fait (DTCaP)'], ['dTcaP', 'Fait avec un dTcaP (pénurie)'], ['non', 'Non fait']]), '', 'ado1113')
+    ]],
+    ['Rougeole – oreillons – rubéole', [
+      fld('Nombre de doses reçues', num('histo.ror.doses', 3)), fld('Date de la dernière dose', dat('histo.ror.dernier')),
+      cb('histo.ror.avant12mois', '1re dose reçue avant l’âge de 12 mois'), cb('histo.ror.rubeoleImmune', 'Immunité rubéoleuse documentée (sérologie)'), cb('histo.ror.rougeoleAntecedent', 'Antécédent certain de rougeole')
+    ]],
+    ['Varicelle', [
+      fld('Antécédent clinique', sel('histo.varicelle.antecedent', [['', '—'], ['non', 'Non'], ['douteux', 'Douteux'], ['oui', 'Oui']])),
+      fld('Sérologie', sel('histo.varicelle.serologie', [['', 'Non faite'], ['neg', 'Négative'], ['pos', 'Positive']])),
+      fld('Doses de vaccin reçues', num('histo.varicelle.doses', 2)), fld('Date de la dernière dose', dat('histo.varicelle.dernier'))
+    ]],
+    ['Papillomavirus (HPV)', [
+      fld('Doses reçues', num('histo.hpv.doses', 3)), fld('Vaccin utilisé', sel('histo.hpv.vaccin', [['gardasil9', 'Gardasil 9'], ['cervarix', 'Cervarix']])),
+      fld('Date de la 1re dose', dat('histo.hpv.premiere')), fld('Date de la dernière dose', dat('histo.hpv.dernier'))
+    ]],
+    ['Méningocoques', [
+      fld('Dernière dose ACWY conjuguée', dat('histo.menacwy.dernier'), 'Nimenrix, MenQuadfi, Menveo'),
+      fld('Méningo B — doses reçues', num('histo.menb.doses', 3)), fld('Méningo B — vaccin', sel('histo.menb.vaccin', [['', '—'], ['bexsero', 'Bexsero'], ['trumenba', 'Trumenba']])),
+      fld('Méningo B — dernière dose', dat('histo.menb.dernier'))
+    ]],
+    ['Hépatite B', [
+      fld('Doses reçues', num('histo.hepb.doses', 4)), fld('Date de la 1re dose', dat('histo.hepb.premiere')), fld('Date de la dernière dose', dat('histo.hepb.dernier')),
+      cb('histo.hepb.schema2', 'Schéma 2 doses Engerix B 20 µg débuté entre 11 et 15 ans'), cb('histo.hepb.immun', 'Immunisation documentée (anti-HBs ≥ 10 UI/L)')
+    ]],
+    ['Hépatite A', [fld('Doses reçues', num('histo.hepa.doses', 2)), fld('Date de la dernière dose', dat('histo.hepa.dernier'))]],
+    ['Pneumocoque', [
+      fld('VPC13 / VPC15 (Prevenar 13, Vaxneuvance)', dat('histo.pneumo.vpc13')), fld('VPP23 (Pneumovax)', dat('histo.pneumo.vpp23')),
+      fld('VPC20 / VPC21 (Prevenar 20, Capvaxive)', dat('histo.pneumo.vpc20'))
+    ]],
+    ['Grippe & Covid-19', [
+      cb('histo.grippe.saison', 'Déjà vacciné(e) contre la grippe cette saison'),
+      fld('Covid — dernière dose', dat('histo.covid.dose')), fld('Covid — dernière infection', dat('histo.covid.infection'))
+    ]],
+    ['Zona', [
+      fld('Doses de Shingrix reçues', num('histo.zona.doses', 2)), fld('Date de la dernière dose', dat('histo.zona.dernier')),
+      fld('Dernier épisode de zona', dat('histo.zona.episode')), fld('Vaccination Zostavax', dat('histo.zona.zostavax'))
+    ]],
+    ['VRS', [fld('Vaccin VRS reçu le', dat('histo.vrs.date'), 'Abrysvo, Arexvy ou mResvia'), cb('histo.vrs.grossessePrec', 'Vaccinée lors d’une grossesse antérieure')]]
+  ];
+
+  function buildForms() {
+    $('#risques').innerHTML = RISQUES.map(([t, list]) => '<h3>' + esc(t) + '</h3><div class="chkgrid">' + list.map(([k, l]) => cb('risques.' + k, esc(l))).join('') + '</div>').join('');
+    $('#histo').innerHTML = HISTO.map(([t, fields]) => '<div class="adm"><h4>' + esc(t) + '</h4><div class="grid">' + fields.join('') + '</div></div>').join('');
+  }
+
+  /* ---------------------------------------------- liaison des champs */
+  function readControl(el) {
+    if (el.type === 'checkbox') return el.checked;
+    if (el.type === 'radio') return el.value;
+    if (el.dataset.type === 'num') return el.value === '' ? '' : +el.value;
+    if (el.value === 'true') return true;
+    if (el.value === 'false') return false;
+    return el.value;
+  }
+  function writeControls() {
+    $$('[data-p]').forEach(el => {
+      const v = getPath(S.input, el.dataset.p);
+      if (el.classList.contains('yn')) {
+        $$('button', el).forEach(b => b.setAttribute('aria-pressed', String(v === true && b.dataset.v === '1' || v === false && b.dataset.v === '0')));
+      } else if (el.type === 'checkbox') el.checked = !!v;
+      else if (el.type === 'radio') el.checked = (v === el.value);
+      else el.value = v == null ? '' : String(v);
+    });
+  }
+  function bindInputs() {
+    document.addEventListener('input', ev => {
+      const el = ev.target.closest('[data-p]'); if (!el || el.classList.contains('yn')) return;
+      if (el.type === 'radio' && !el.checked) return;
+      setPath(S.input, el.dataset.p, readControl(el)); onInputChange();
+    });
+    document.addEventListener('change', ev => {
+      const el = ev.target.closest('[data-p]'); if (!el || el.classList.contains('yn')) return;
+      if (el.type === 'radio' && !el.checked) return;
+      setPath(S.input, el.dataset.p, readControl(el)); onInputChange();
+    });
+    document.addEventListener('click', ev => {
+      const b = ev.target.closest('.yn button'); if (!b) return;
+      const g = b.closest('.yn'); const v = b.dataset.v === '1';
+      const cur = getPath(S.input, g.dataset.p);
+      setPath(S.input, g.dataset.p, cur === v ? null : v);
+      g.classList.remove('missing'); writeControls(); onInputChange();
+    });
+  }
+
+  function age() { const d = D.parse(S.input.patient.ddn); return d ? D.age(d, D.parse(TODAY)) : null; }
+  const SHOW = {
+    femme: () => S.input.patient.sexe === 'F',
+    enceinte: () => S.input.patient.sexe === 'F' && S.input.entretien.grossesse === true,
+    nonEnceinte: () => S.input.entretien.grossesse !== true,
+    anaphylaxie: () => S.input.entretien.anaphylaxie === true,
+    vivantRecent: () => S.input.entretien.vivantRecentOui === true,
+    ado1113: () => { const a = age(); return a != null && a >= 11 && a <= 13; }
+  };
+  function applyShow() { $$('[data-show]').forEach(el => { const f = SHOW[el.dataset.show]; el.hidden = f ? !f() : false; }); }
+
+  function onInputChange() {
+    const a = age();
+    const d = D.parse(S.input.patient.ddn);
+    $('#p-age').textContent = a == null ? '' : (a + ' an' + (a > 1 ? 's' : '') + (a < 11 ? (a >= 5 ? ' — seul le vaccin Covid-19 peut être prescrit par le pharmacien' : ' — hors compétence du pharmacien') : ''));
+    if (d && d > D.parse(TODAY)) $('#p-age').textContent = 'Date de naissance dans le futur';
+    applyShow();
+    compute();
+    if (S.step === 4) renderReco();
+  }
+
+  /* ------------------------------------------------ calcul moteur */
+  function engineInput() {
+    const i = JSON.parse(JSON.stringify(S.input));
+    const e = i.entretien;
+    if (i.patient.sexe !== 'F') { e.grossesse = false; e.projetGrossesse = false; e.allaitement = false; }
+    if (e.anaphylaxie !== true) e.anaphylaxieVaccin = '';
+    if (e.vivantRecentOui !== true) e.vivantRecent = '';
+    else if (!e.vivantRecent) e.vivantRecent = D.iso(D.addDays(D.parse(TODAY), -1));
+    return i;
+  }
+  function compute() {
+    S.result = window.VP.evaluate(engineInput(), SET, TODAY);
+    // préserver / initialiser les sélections
+    for (const it of S.result.items) {
+      const k = it.groupe === 'autres' ? null : it.groupe; if (!k) continue;
+      const s = S.sel[k] || (S.sel[k] = { on: false, produit: '', voie: '', dose: '', touched: false });
+      const ids = it.produits.map(p => p.id);
+      if (!ids.includes(s.produit)) s.produit = ids[0] || '';
+      if (!s.touched) { s.dose = it.doseLabel || ''; s.on = it.status === 'recommande'; }
+      const p = it.produits.find(x => x.id === s.produit);
+      if (p && !p.voies.includes(s.voie)) s.voie = (S.input.entretien.anticoag && p.voies.includes('SC')) ? 'SC' : p.voies[0];
+    }
+    const n = S.result.items.filter(i => i.status === 'recommande').length;
+    const c = $('#cnt-reco'); c.hidden = !n; c.textContent = n;
+  }
+  function prescribable(it) { return STATUTS[it.status] && STATUTS[it.status].prescriptible; }
+  function derogeable(it) { return ['en_cours', 'a_jour', 'non_indique'].includes(it.status) && it.groupe !== 'autres' && it.produits.length; }
+  function lines() {
+    if (!S.result) return [];
+    return S.result.items.filter(it => {
+      const s = S.sel[it.groupe]; if (!s || !s.on) return false;
+      if (prescribable(it)) return true;
+      return derogeable(it) && S.derog[it.groupe] && S.derog[it.groupe].trim().length >= 10;
+    }).map(it => {
+      const s = S.sel[it.groupe];
+      const p = it.produits.find(x => x.id === s.produit) || it.produits[0];
+      return { it, s, p, voie: s.voie || (p && p.voies[0]) || 'IM', dose: s.dose || it.doseLabel || '', derog: !prescribable(it) ? S.derog[it.groupe] : '' };
+    }).filter(l => l.p).filter((l, i, arr) => arr.findIndex(x => x.p.id === l.p.id) === i);
+  }
+
+  /* ----------------------------------------- rendu des recommandations */
+  function fmtDate(d) { return d ? D.fr(d) : ''; }
+  function renderReco() {
+    const r = S.result;
+    const p = S.input.patient;
+    const a = age();
+    $('#reco-head').innerHTML = '<div class="card" style="padding:12px 16px"><div class="row"><b style="font-size:16px">' + esc((p.nom || '').toUpperCase()) + ' ' + esc(p.prenom || '') + '</b>' +
+      (a != null ? '<span class="badge">' + a + ' ans</span>' : '') + (p.sexe ? '<span class="badge">' + (p.sexe === 'F' ? 'Femme' : 'Homme') + '</span>' : '') +
+      (r.contexte.pregnant ? '<span class="badge">Enceinte' + (r.contexte.sa != null ? ' — ' + r.contexte.sa + ' SA' : '') + '</span>' : '') +
+      (r.contexte.ID ? '<span class="badge">Immunodéprimé</span>' : '') + '<span class="spacer"></span><span class="badge">Référentiel : calendrier des vaccinations 2026</span></div></div>';
+    const miss = missingEntretien();
+    const g = r.globaux.slice();
+    if (miss.length) g.unshift({ niveau: 'alerte', texte: 'Entretien incomplet (' + miss.length + ' question' + (miss.length > 1 ? 's' : '') + ' sans réponse) : les recommandations peuvent changer.' });
+    $('#globals').innerHTML = g.map(x => '<div class="msg ' + x.niveau + '">' + esc(x.texte) + '</div>').join('');
+    const act = r.items.filter(i => !['a_jour', 'non_indique', 'en_cours'].includes(i.status));
+    const rest = r.items.filter(i => ['a_jour', 'non_indique', 'en_cours'].includes(i.status));
+    let html = '';
+    if (act.length) html += '<div class="reco">' + act.map(card).join('') + '</div>';
+    else if (r.items.length) html += '<div class="msg ok">Aucune vaccination à réaliser aujourd’hui d’après les informations saisies.</div>';
+    if (rest.length) {
+      html += '<div class="group-title">Schémas en cours, à jour ou non indiqués</div><div class="folded">' + rest.map(mini).join('') + '</div>';
+    }
+    $('#reco').innerHTML = html;
+  }
+  function metaHTML(it) {
+    const m = [];
+    if (it.schema) m.push('<span><b>Schéma :</b> ' + esc(it.schema) + '</span>');
+    if (it.prochaine) m.push('<span><b>Prochaine échéance :</b> ' + fmtDate(it.prochaine) + (it.prochaineNote ? ' — ' + esc(it.prochaineNote) : '') + '</span>');
+    if (it.priseEnCharge) m.push('<span><b>Prise en charge :</b> ' + esc(it.priseEnCharge) + '</span>');
+    if (it.refs && it.refs.length) m.push('<span><b>Réf. :</b> ' + esc(it.refs.join(' ; ')) + '</span>');
+    return m.length ? '<div class="meta">' + m.join('') + '</div>' : '';
+  }
+  function prescHTML(it, derog) {
+    const s = S.sel[it.groupe]; const g = it.groupe;
+    const p = it.produits.find(x => x.id === s.produit) || it.produits[0];
+    const voies = p ? p.voies : ['IM'];
+    return '<div class="presc">' +
+      '<label class="toggle"><input type="checkbox" data-sel="' + g + '.on"' + (s.on ? ' checked' : '') + '> ' + (derog ? 'Prescrire malgré tout' : 'Prescrire') + '</label>' +
+      '<div class="f"><label>Spécialité</label><select data-sel="' + g + '.produit">' + it.produits.map(x => '<option value="' + x.id + '"' + (x.id === s.produit ? ' selected' : '') + '>' + esc(x.nom) + '</option>').join('') + '</select></div>' +
+      '<div class="f"><label>Voie</label><select data-sel="' + g + '.voie">' + voies.map(v => '<option' + (v === s.voie ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
+      '<div class="f"><label>Rang / nature de la dose</label><input data-sel="' + g + '.dose" value="' + esc(s.dose) + '"></div>' +
+      '</div>' +
+      (derog ? '<div class="f" style="margin-top:8px"><label class="req">Justification (consignée sur la fiche d’entretien)</label><textarea rows="2" data-derog="' + g + '" placeholder="Ex. : carnet non présenté, dernière dose non documentée…">' + esc(S.derog[g] || '') + '</textarea></div>' : '') +
+      (it.exclus.filter(x => x.raison !== 'hors schéma').length ? '<div class="excl">Spécialités écartées : ' + it.exclus.filter(x => x.raison !== 'hors schéma').map(x => esc(x.nom) + ' (' + esc(x.raison) + ')').join(' ; ') + '</div>' : '');
+  }
+  function card(it) {
+    const can = prescribable(it) && it.produits.length;
+    return '<article class="rc" data-s="' + it.status + '">' +
+      '<div class="rc-h"><b>' + esc(it.label) + '</b><span class="chip ' + it.status + '">' + STATUTS[it.status].label + '</span>' + (it.doseLabel && can ? '<span class="badge">' + esc(it.doseLabel) + '</span>' : '') + (it.vivant ? '<span class="badge">vaccin vivant</span>' : '') + '</div>' +
+      '<ul>' + it.raisons.map(x => '<li>' + esc(x) + '</li>').join('') + it.alertes.map(x => '<li class="al">⚠ ' + esc(x) + '</li>').join('') + '</ul>' +
+      metaHTML(it) + (can ? prescHTML(it, false) : '') + '</article>';
+  }
+  function mini(it) {
+    const d = derogeable(it);
+    const open = d && S.sel[it.groupe] && S.sel[it.groupe].on;
+    return '<div class="mini"><span class="chip ' + it.status + '">' + STATUTS[it.status].label + '</span><b>' + esc(it.label) + '</b>' +
+      '<p>' + esc(it.raisons.join(' ')) + (it.prochaine ? ' <b>Échéance : ' + fmtDate(it.prochaine) + '</b>' + (it.prochaineNote ? ' (' + esc(it.prochaineNote) + ')' : '') : '') + '</p>' +
+      (d ? '<details' + (open ? ' open' : '') + '><summary>Prescrire malgré tout (dérogation justifiée)</summary>' + prescHTML(it, true) + '</details>' : '') + '</div>';
+  }
+  function bindReco() {
+    $('#reco').addEventListener('change', ev => {
+      const el = ev.target;
+      if (el.dataset.sel) {
+        const [g, k] = el.dataset.sel.split('.'); const s = S.sel[g]; s.touched = true;
+        s[k] = el.type === 'checkbox' ? el.checked : el.value;
+        if (k === 'produit') { const it = S.result.items.find(i => i.groupe === g); const p = it && it.produits.find(x => x.id === s.produit); if (p) s.voie = (S.input.entretien.anticoag && p.voies.includes('SC')) ? 'SC' : (p.voies.includes(s.voie) ? s.voie : p.voies[0]); renderReco(); }
+      }
+    });
+    $('#reco').addEventListener('input', ev => {
+      const el = ev.target;
+      if (el.dataset.derog) S.derog[el.dataset.derog] = el.value;
+      if (el.dataset.sel && el.dataset.sel.endsWith('.dose')) { const g = el.dataset.sel.split('.')[0]; S.sel[g].dose = el.value; S.sel[g].touched = true; }
+    });
+  }
+
+  /* --------------------------------------------- validations */
+  const ENTRETIEN_REQ = [
+    ['immunosup', 'traitement immunosuppresseur'], ['corticoides', 'corticothérapie'], ['anticoag', 'anticoagulant'], ['antiagreg', 'antiagrégant'],
+    ['immunodep', 'immunodépression'], ['grossesse', 'grossesse', 'F'], ['projetGrossesse', 'projet de grossesse', 'Fnp'], ['allaitement', 'allaitement', 'F'],
+    ['anaphylaxie', 'antécédent d’anaphylaxie'], ['fievre', 'fièvre'], ['infectionAigue', 'infection aiguë'], ['sgb', 'Guillain-Barré'],
+    ['vivantRecentOui', 'vaccin vivant récent'], ['voyage', 'contexte de voyage']
+  ];
+  function missingEntretien() {
+    const e = S.input.entretien, F = S.input.patient.sexe === 'F';
+    return ENTRETIEN_REQ.filter(([k, , cond]) => {
+      if (cond === 'F' && !F) return false;
+      if (cond === 'Fnp' && (!F || e.grossesse === true)) return false;
+      return e[k] !== true && e[k] !== false;
+    });
+  }
+  function currentPharmacien() { const id = $('#hdr-pharm').value; return SET.pharmaciens.find(p => p.id === id) || null; }
+  function checksOrdo() {
+    const o = SET.officine, p = S.input.patient, ph = currentPharmacien(), L = lines();
+    const c = [];
+    c.push([!!(o.nom && o.adresse && o.cp && o.ville && o.tel), 'Officine paramétrée (nom, adresse, téléphone)', 'Compléter l’officine dans Paramètres']);
+    c.push([!!ph, 'Pharmacien prescripteur sélectionné', 'Ajouter / choisir un pharmacien (en-tête)']);
+    if (ph) {
+      c.push([/^\d{11}$/.test(String(ph.rpps || '').replace(/\s/g, '')), 'Identifiant RPPS du prescripteur (11 chiffres)', 'RPPS manquant ou invalide']);
+      c.push([ph.declare === true, 'Pharmacien formé à la prescription et déclaré au conseil de l’Ordre', 'Prescription impossible : formation / déclaration non renseignée']);
+    }
+    c.push([!!(p.nom && p.prenom && p.sexe && p.ddn), 'Identité du patient (nom, prénoms, sexe, date de naissance)', 'Identité incomplète']);
+    const a = age();
+    c.push([a != null && a >= 5, 'Âge compatible avec la prescription par le pharmacien', 'Patient de moins de 5 ans']);
+    const miss = missingEntretien();
+    c.push([!miss.length, 'Entretien pré-vaccinal complet', 'Sans réponse : ' + miss.map(x => x[1]).join(', ')]);
+    if (S.input.entretien.vivantRecentOui === true) c.push([!!S.input.entretien.vivantRecent, 'Date du vaccin vivant récent renseignée', 'Préciser la date du vaccin vivant récent']);
+    c.push([L.length > 0, 'Au moins un vaccin sélectionné', 'Sélectionner un vaccin à l’étape Recommandations']);
+    const derogKO = S.result ? S.result.items.filter(it => derogeable(it) && S.sel[it.groupe] && S.sel[it.groupe].on && !(S.derog[it.groupe] && S.derog[it.groupe].trim().length >= 10)) : [];
+    if (derogKO.length) c.push([false, '', 'Justification manquante pour : ' + derogKO.map(x => x.label).join(', ')]);
+    const blk = S.result ? S.result.globaux.filter(g => g.niveau === 'bloquant') : [];
+    if (blk.length) c.push([false, '', blk.map(b => b.texte).join(' ')]);
+    c.push([$('#confirm-entretien').checked, 'Entretien, information et consentement attestés', 'Cocher l’attestation d’entretien']);
+    return c;
+  }
+  function renderOrdo() {
+    const c = checksOrdo();
+    $('#checks').innerHTML = c.map(([ok, l, ko]) => '<li class="' + (ok ? 'okk' : 'ko') + '"><span class="ic">' + (ok ? '✓' : '!') + '</span><span>' + esc(ok ? l : ko) + '</span></li>').join('');
+    const L = lines();
+    const infos = L.filter(l => l.derog).map(l => '<div class="msg alerte" style="margin-top:8px">Dérogation — ' + esc(l.it.label) + ' : ' + esc(l.derog) + '</div>');
+    if (L.length > 4) infos.push('<div class="msg alerte" style="margin-top:8px">' + L.length + ' vaccins sélectionnés : jusqu\u2019à 4 injections par séance, en accord avec la personne (sites différents espacés d\u2019au moins 2,5 cm). Les autres peuvent être programmés.</div>');
+    if (L.filter(l => l.p.vivant).length > 1) infos.push('<div class="msg info" style="margin-top:8px">Plusieurs vaccins vivants : à administrer le même jour (ou à 4 semaines d\u2019intervalle).</div>');
+    $('#derog-box').innerHTML = infos.join('');
+    const ok = c.every(x => x[0]);
+    $('#btn-print-ordo').disabled = !ok;
+    $('#ordo-preview').innerHTML = L.length ? docOrdonnance(false) : '<p class="lead" style="text-align:center">Sélectionnez au moins un vaccin à l’étape « Recommandations ».</p>';
+  }
+
+  /* --------------------------------------------- documents */
+  function tel33(t) {
+    const d = String(t || '').replace(/[^\d+]/g, '');
+    if (/^0\d{9}$/.test(d)) return '+33 ' + d.slice(1).replace(/(\d)(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
+    return t || '';
+  }
+  function enTete(ph) {
+    const o = SET.officine;
+    return '<div class="dh"><div class="off">' + (o.logo ? '<img src="' + esc(o.logo) + '" alt="">' : '') + '<div><b>' + esc(o.nom || 'OFFICINE') + '</b><br>' + esc(o.adresse) + '<br>' + esc(o.cp) + ' ' + esc(o.ville) + ' — France<br>Tél. ' + esc(tel33(o.tel)) + (o.email ? '<br>' + esc(o.email) : '') +
+      ((o.finess || o.numAM) ? '<br><span class="small">' + (o.finess ? 'FINESS ' + esc(o.finess) : '') + (o.finess && o.numAM ? ' · ' : '') + (o.numAM ? 'N° AM ' + esc(o.numAM) : '') + '</span>' : '') + '</div></div>' +
+      '<div class="pr">' + (ph ? '<b>' + esc(ph.prenom) + ' ' + esc((ph.nom || '').toUpperCase()) + '</b><br>Pharmacien' + (ph.statut ? ' ' + esc(ph.statut) : '') + '<br>RPPS ' + esc(ph.rpps) : '<b>Pharmacien</b>') + '</div></div>';
+  }
+  function patientBloc(withAM) {
+    const p = S.input.patient; const a = age();
+    let s = '<div class="pat"><b>' + (p.sexe === 'F' ? 'Mme ' : p.sexe === 'M' ? 'M. ' : '') + esc((p.nom || '').toUpperCase()) + ' ' + esc(p.prenom || '') + '</b> — Sexe : ' + (p.sexe === 'F' ? 'féminin' : p.sexe === 'M' ? 'masculin' : '—') +
+      ' — Né(e) le ' + esc(D.fr(p.ddn)) + (a != null ? ' (' + a + ' ans)' : '') + (p.poids ? ' — Poids : ' + esc(p.poids) + ' kg' : '');
+    if (withAM && (p.nir || p.rang || p.organisme)) s += '<div class="am">N° d’immatriculation : ' + esc(p.nir || '—') + (p.rang ? ' · Rang de naissance : ' + esc(p.rang) : '') + (p.organisme ? ' · Code organisme : ' + esc(p.organisme) : '') + '</div>';
+    return s + '</div>';
+  }
+  function docOrdonnance(copie) {
+    const ph = currentPharmacien(); const o = SET.officine; const L = lines();
+    const items = L.map(l => '<li><div class="dc">' + esc(l.p.dc) + '</div><div><span class="sp">' + esc(l.p.nom) + '</span> — ' + esc(window.VP.posologie(l.p, l.voie)) + '.</div>' +
+      '<div>Quantité : 1 dose' + (l.dose ? ' — ' + esc(l.dose) : '') + '.</div>' +
+      (l.it.schema ? '<div class="small">Schéma : ' + esc(l.it.schema) + '.</div>' : '') +
+      (l.it.prochaine && l.it.totalDoses && l.it.doseRang && l.it.doseRang < l.it.totalDoses ? '<div class="small">Dose suivante à partir du ' + D.fr(l.it.prochaine) + ' (nouvelle prescription).</div>' : '') + '</li>').join('');
+    return '<section class="doc">' + enTete(ph) +
+      '<h1>ORDONNANCE</h1><p class="sub1">Prescription de vaccination par le pharmacien d’officine</p>' +
+      '<p class="lieu">' + esc(o.ville || '') + ', le ' + D.fr(TODAY) + '</p>' + patientBloc(true) +
+      '<ol class="lines">' + items + '</ol>' +
+      '<div class="legal">Vaccin(s) soumis à prescription médicale, prescrit(s) conformément au calendrier des vaccinations et recommandations vaccinales en vigueur, par un pharmacien d’officine ayant suivi la formation requise et déclaré son activité de prescription au conseil de l’Ordre des pharmaciens (art. L. 5125-1-1 A et R. 5125-33-8 du code de la santé publique ; arrêté du 8 août 2023 modifié fixant la liste des vaccins que certains professionnels de santé sont autorisés à prescrire ou administrer). Entretien préalable réalisé : absence de contre-indication identifiée.</div>' +
+      '<div class="sign"><div>Signature du pharmacien prescripteur et cachet de l’officine</div></div>' +
+      '<div class="dfoot"><span>' + (copie ? 'Copie conservée à l’officine' : 'Original remis au patient') + '</span><span>' + esc(o.nom || '') + '</span></div></section>';
+  }
+  function yn(v) { return v === true ? 'Oui' : v === false ? 'Non' : '—'; }
+  function docFiche() {
+    const ph = currentPharmacien(); const e = S.input.entretien; const F = S.input.patient.sexe === 'F';
+    const q = [['Traitement immunosuppresseur', e.immunosup], ['Corticothérapie > 10 mg/j > 14 j', e.corticoides], ['Anticoagulant', e.anticoag], ['Antiagrégant plaquettaire', e.antiagreg], ['Immunodépression', e.immunodep]];
+    if (F) q.push(['Grossesse' + (e.grossesse && e.sa ? ' (' + e.sa + ' SA)' : ''), e.grossesse], ['Projet de grossesse', e.grossesse ? null : e.projetGrossesse], ['Allaitement', e.allaitement]);
+    q.push(['Anaphylaxie lors d’une vaccination antérieure' + (e.anaphylaxie ? ' — vaccin : ' + (GROUPES[e.anaphylaxieVaccin] ? GROUPES[e.anaphylaxieVaccin].court : 'inconnu') + (e.anaphylaxieComposant ? ', composant : ' + e.anaphylaxieComposant : '') : ''), e.anaphylaxie]);
+    const al = Object.keys(e.allergies || {}).filter(k => e.allergies[k]).map(k => ALLERGENES[k]);
+    q.push(['Allergies graves à un constituant : ' + (al.length ? al.join(', ') : 'aucune'), al.length ? true : false]);
+    q.push(['Fièvre > 38 °C', e.fievre], ['Infection aiguë modérée/sévère', e.infectionAigue], ['Guillain-Barré post-vaccinal', e.sgb], ['Vaccin vivant < 4 semaines' + (e.vivantRecentOui && e.vivantRecent ? ' (' + D.fr(e.vivantRecent) + ')' : ''), e.vivantRecentOui], ['Contexte de voyage', e.voyage]);
+    const rk = []; RISQUES.forEach(([, l]) => l.forEach(([k, lab]) => { if (S.input.risques[k]) rk.push(lab); }));
+    const items = S.result ? S.result.items : [];
+    const L = lines();
+    return '<section class="doc flow">' + enTete(ph) + '<h1>FICHE D’ENTRETIEN PRÉ-VACCINAL</h1><p class="sub1">Recueil d’informations préalable à la prescription — document conservé à l’officine</p>' +
+      '<p class="lieu">' + esc(SET.officine.ville || '') + ', le ' + D.fr(TODAY) + '</p>' + patientBloc(false) +
+      '<h2>Questionnaire</h2><div class="qa">' + q.map(([l, v]) => '<div>' + esc(l) + '</div><div>' + yn(v) + '</div>').join('') + '</div>' +
+      '<h2>Facteurs de risque et situations</h2><p class="small">' + (rk.length ? esc(rk.join(' ; ')) : 'Aucun signalé.') + '</p>' +
+      '<p class="small">Source des antécédents vaccinaux : ' + esc(S.input.patient.source || 'non précisée') + '. Médecin traitant : ' + esc(S.input.patient.medecin || '—') + ' — consentement à la transmission : ' + yn(S.input.patient.consentMT) + '.</p>' +
+      '<h2>Analyse et décision</h2><table class="dt"><tr><th class="c">Vaccin</th><th class="c">Conclusion</th><th class="c">Motif</th></tr>' +
+      items.map(it => '<tr><td>' + esc(it.label) + '</td><td>' + STATUTS[it.status].label + (L.some(l => l.it.groupe === it.groupe) ? ' — <b>prescrit</b>' : '') + '</td><td class="small">' + esc(it.raisons.join(' ')) + '</td></tr>').join('') + '</table>' +
+      L.filter(l => l.derog).map(l => '<div class="box small"><b>Prescription par dérogation — ' + esc(l.it.label) + ' :</b> ' + esc(l.derog) + '</div>').join('') +
+      '<div class="sign"><div>Pharmacien : ' + (ph ? esc(ph.prenom + ' ' + ph.nom) : '') + '<br>Signature</div></div>' +
+      '<div class="dfoot"><span>Fiche d’entretien — copie officine</span><span>Outil d’aide à la prescription vaccinale v' + window.VP.version + '</span></div></section>';
+  }
+  function admPharm() { const id = S.adm.__vaccinateur || $('#hdr-pharm').value; return SET.pharmaciens.find(p => p.id === id) || currentPharmacien(); }
+  function docAttestation() {
+    const ph = admPharm(); const o = SET.officine; const p = S.input.patient; const L = lines();
+    const t = S.trace;
+    const rows = '<table class="dt"><tr><th class="c">Vaccin administré</th><th class="c">Dose</th><th class="c">N° de lot</th><th class="c">Péremption</th><th class="c">Voie et site</th></tr>' +
+      L.map(l => { const a = S.adm[l.it.groupe] || {};
+        const nx = l.it.prochaine && ((l.it.totalDoses && l.it.doseRang < l.it.totalDoses) || l.it.groupe === 'dtcap') ? '<br><span class="small"><b>' + (l.it.groupe === 'dtcap' ? 'Prochain rappel' : 'Dose suivante à partir du') + ' ' + D.fr(l.it.prochaine) + '</b></span>' : '';
+        return '<tr><td><b>' + esc(l.p.nom) + '</b><br><span class="small">' + esc(l.it.maladies) + '</span>' + nx + '</td><td>' + esc(l.dose || '—') + '</td><td><b>' + esc(a.lot || '') + '</b></td><td>' + esc(fmtExp(a.peremption)) + '</td><td>' + ((a.voie || l.voie) === 'SC' ? 'SC' : 'IM') + ' — ' + esc(a.site || '') + '</td></tr>'; }).join('') + '</table>';
+    const d0 = (S.adm.__date || TODAY), h0 = S.adm.__heure || '';
+    return '<section class="doc">' + enTete(ph) + '<h1>ATTESTATION DE VACCINATION</h1><p class="sub1">Exemplaire à conserver par le patient</p>' +
+      '<p><b>' + esc((p.nom || '').toUpperCase()) + ' ' + esc(p.prenom || '') + '</b>, né(e) le ' + esc(D.fr(p.ddn)) + ',<br>a été vacciné(e) le <b>' + D.fr(d0) + '</b>' + (h0 ? ' à ' + esc(h0) : '') +
+      ' par <b>' + (ph ? esc(ph.prenom + ' ' + (ph.nom || '').toUpperCase()) : '') + '</b>, pharmacien' + (ph && ph.rpps ? ' (RPPS ' + esc(ph.rpps) + ')' : '') + ', exerçant à la ' + esc(o.nom || 'pharmacie') + ', ' + esc(o.adresse) + ', ' + esc(o.cp) + ' ' + esc(o.ville) + '.</p>' +
+      rows +
+      '<div class="box small"><b>Traçabilité :</b> <span class="cb' + (t.dmp ? ' x' : '') + '">Mon espace santé (DMP)</span> &nbsp; <span class="cb' + (t.carnet ? ' x' : '') + '">Carnet de santé / de vaccination</span> &nbsp; <span class="cb' + (t.ordonnancier ? ' x' : '') + '">Ordonnancier de l’officine</span><br>' +
+      (p.consentMT === true ? '<span class="cb' + (t.mtTransmis ? ' x' : '') + '">Information transmise au médecin traitant' + (p.medecin ? ' (' + esc(p.medecin) + ')' : '') + ' par messagerie sécurisée de santé</span>' : 'Le patient n’a pas souhaité la transmission à son médecin traitant : il lui appartient de l’en informer.') + '</div>' +
+      '<p class="small">Vaccination réalisée par un pharmacien d’officine en application du décret n° 2023-736 du 8 août 2023 relatif aux compétences vaccinales des pharmaciens d’officine. Entretien pré-vaccinal réalisé, absence de contre-indication retenue. Conservez ce document et présentez-le lors de vos prochaines vaccinations.</p>' +
+      '<p class="lieu">Fait à ' + esc(o.ville || '') + ', le ' + D.fr(d0) + '</p>' +
+      '<div class="sign"><div>Signature du pharmacien vaccinateur et tampon de la pharmacie</div></div>' +
+      '<div class="dfoot"><span>Attestation de vaccination — exemplaire patient</span><span>' + esc(o.nom || '') + ' — Tél. ' + esc(tel33(o.tel)) + '</span></div></section>';
+  }
+  function printDocs(html) {
+    const root = $('#print-root'); root.innerHTML = html;
+    setTimeout(() => { window.print(); }, 60);
+  }
+
+  /* --------------------------------------------- administration */
+  const SITES = ['Deltoïde gauche', 'Deltoïde droit', 'Face postérieure du bras gauche (SC)', 'Face postérieure du bras droit (SC)', 'Cuisse gauche (antérolatérale)', 'Cuisse droite (antérolatérale)'];
+  function renderAdm() {
+    const L = lines();
+    if (!L.length) { $('#adm-list').innerHTML = '<p class="lead">Aucun vaccin prescrit.</p>'; $('#att-preview').innerHTML = ''; $('#fact').innerHTML = ''; return; }
+    if (!S.adm.__date) S.adm.__date = TODAY;
+    if (!S.adm.__heure) { const n = new Date(); S.adm.__heure = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'); }
+    let i = 0;
+    $('#adm-list').innerHTML = '<div class="grid" style="margin-bottom:10px"><div class="f"><label class="req">Date de l’injection</label><input type="date" data-adm="__date" value="' + esc(S.adm.__date) + '"></div>' +
+      '<div class="f"><label>Heure</label><input type="time" data-adm="__heure" value="' + esc(S.adm.__heure) + '"></div>' +
+      '<div class="f"><label class="req">Pharmacien vaccinateur</label><select data-adm="__vaccinateur">' + SET.pharmaciens.map(p => '<option value="' + p.id + '"' + ((S.adm.__vaccinateur || $('#hdr-pharm').value) === p.id ? ' selected' : '') + '>' + esc(p.prenom + ' ' + p.nom) + '</option>').join('') + '</select></div></div>' +
+      L.map(l => {
+        const g = l.it.groupe; const a = S.adm[g] || (S.adm[g] = { voie: l.voie, site: '' });
+        if (!a.site) a.site = (a.voie === 'SC' ? SITES[2] : SITES[i % 2]); i++;
+        const expired = isExpired(a.peremption);
+        return '<div class="adm"><h4>' + esc(l.p.nom) + ' <span class="badge">' + esc(l.it.label) + '</span> <span class="badge">' + esc(l.dose) + '</span></h4><div class="grid">' +
+          '<div class="f"><label class="req">N° de lot</label><input data-adm="' + g + '.lot" value="' + esc(a.lot || '') + '" autocomplete="off" style="text-transform:uppercase"></div>' +
+          '<div class="f"><label class="req">Péremption</label><input data-adm="' + g + '.peremption" value="' + esc(a.perRaw != null ? a.perRaw : fmtExp(a.peremption)) + '" placeholder="MM/AAAA" inputmode="numeric" maxlength="7" autocomplete="off"><span class="err" id="exp-' + g + '">' + expMsg(a) + '</span></div>' +
+          '<div class="f"><label class="req">Voie</label><select data-adm="' + g + '.voie">' + l.p.voies.map(v => '<option' + (v === a.voie ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
+          '<div class="f"><label class="req">Site d’injection</label><select data-adm="' + g + '.site">' + SITES.map(s => '<option' + (s === a.site ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></div>' +
+          '</div>' + (S.input.entretien.anticoag && a.voie === 'IM' ? '<p class="err" style="margin:6px 0 0">Sous anticoagulant : aiguille fine, deltoïde, compression prolongée.</p>' : '') + '</div>';
+      }).join('');
+    $$('[data-a]').forEach(el => { el.checked = !!S.trace[el.dataset.a]; });
+    $('#btn-journal').hidden = !SET.journal.actif;
+    renderFact(); renderAtt();
+  }
+  function admChecks() {
+    const L = lines(); const errs = [];
+    if (!S.adm.__date) errs.push('date de l’injection');
+    for (const l of L) {
+      const a = S.adm[l.it.groupe] || {};
+      if (!a.lot) errs.push('n° de lot (' + l.p.nom + ')');
+      if (!a.peremption) errs.push('péremption (' + l.p.nom + ')');
+      else if (isExpired(a.peremption)) errs.push(l.p.nom + ' PÉRIMÉ');
+      if (!a.site) errs.push('site (' + l.p.nom + ')');
+    }
+    // vaccins vivants le même jour ou à 4 semaines : information
+    return errs;
+  }
+  /* péremption saisie en MM/AAAA → stockée AAAA-MM */
+  function parseExp(v) {
+    const m = /^\s*(\d{1,2})\s*[\/\-. ]?\s*(\d{4}|\d{2})\s*$/.exec(v || '');
+    if (!m) return '';
+    const mo = +m[1], y = m[2].length === 2 ? 2000 + +m[2] : +m[2];
+    if (mo < 1 || mo > 12 || y < 2000 || y > 2100) return '';
+    return y + '-' + String(mo).padStart(2, '0');
+  }
+  function fmtExp(iso) { return iso ? iso.split('-').reverse().join('/') : ''; }
+  function isExpired(iso) {
+    if (!iso) return false;
+    const e = D.parse(iso + '-01'); const end = new Date(e.getFullYear(), e.getMonth() + 1, 0);
+    return end < D.parse(S.adm.__date || TODAY);
+  }
+  function expMsg(a) {
+    if (a.perRaw && !a.peremption) return 'Format attendu : MM/AAAA';
+    return isExpired(a.peremption) ? 'Vaccin périmé : ne pas administrer.' : '';
+  }
+  function renderAtt() {
+    const errs = admChecks();
+    $('#adm-msg').innerHTML = errs.length ? '<div class="msg alerte">À compléter avant impression : ' + esc(errs.join(', ')) + '.</div>' : '<div class="msg ok">Acte complet : l’attestation peut être imprimée.</div>';
+    $('#btn-print-att').disabled = !!errs.length;
+    $('#att-preview').innerHTML = docAttestation();
+  }
+  function renderFact() {
+    const L = lines(); const H = SET.honoraires;
+    const rows = L.map(l => {
+      const code = l.it.honoraire || 'RVA';
+      const mt = code === 'VGP' ? H.vgp : code === 'INJ' ? H.inj : H.rvaPharmacien;
+      return '<tr><td>' + esc(l.p.nom) + '</td><td>Code CIP du vaccin + acte <b>' + code + '</b> (' + Number(mt).toFixed(2).replace('.', ',') + ' € TTC)</td><td class="small">' + esc(l.it.priseEnCharge || '') + (l.it.codePrescripteur ? ' — indiquer le code prescripteur pharmacien ' + esc(H.codePrescripteur) + ' et s’identifier comme exécutant.' : ' — s’identifier comme prescripteur et exécutant.') + '</td></tr>';
+    }).join('');
+    $('#fact').innerHTML = '<table class="t"><thead><tr><th>Vaccin</th><th>Facturation</th><th>Prise en charge</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<p class="hint" style="color:var(--ink-3);font-size:13px">Sans prescription préalable, le bon de prise en charge Assurance Maladie dûment complété vaut prescription et sert de support à la facturation. L’acte n’est pris en charge que si le vaccin l’est (calendrier vaccinal). DROM : coefficient ' + esc(H.coefDrom) + '. Montants paramétrables.</p>';
+  }
+  function mssText() {
+    const ph = admPharm(); const o = SET.officine; const p = S.input.patient; const L = lines();
+    return 'Objet : Vaccination réalisée en officine — ' + (p.nom || '').toUpperCase() + ' ' + (p.prenom || '') + ' (né(e) le ' + D.fr(p.ddn) + ')\n\n' +
+      'Cher Confrère, chère Consœur,\n\nJe vous informe que votre patient(e) ' + (p.prenom || '') + ' ' + (p.nom || '').toUpperCase() + ', né(e) le ' + D.fr(p.ddn) + ', a été vacciné(e) le ' + D.fr(S.adm.__date || TODAY) + ' à la ' + (o.nom || 'pharmacie') + ' :\n' +
+      L.map(l => { const a = S.adm[l.it.groupe] || {}; return '- ' + l.p.nom + ' (' + l.it.label + ') — ' + (l.dose || '') + ' — lot ' + (a.lot || '…') + ', péremption ' + (fmtExp(a.peremption) || '…') + ', voie ' + (a.voie || l.voie) + ', ' + (a.site || '') +
+        (l.it.prochaine && l.it.totalDoses && l.it.doseRang < l.it.totalDoses ? '. Dose suivante à partir du ' + D.fr(l.it.prochaine) : '') + '.'; }).join('\n') +
+      '\n\nUn entretien préalable a été réalisé ; aucune contre-indication n’a été retenue.' + (S.input.entretien.anticoag ? ' Patient sous anticoagulant : précautions d’injection appliquées.' : '') +
+      '\n\nBien confraternellement,\n' + (ph ? ph.prenom + ' ' + ph.nom + ', pharmacien' + (ph.rpps ? ' — RPPS ' + ph.rpps : '') : '') + '\n' + (o.nom || '') + ' — ' + (o.adresse || '') + ', ' + (o.cp || '') + ' ' + (o.ville || '') + ' — Tél. ' + tel33(o.tel);
+  }
+  function bindAdm() {
+    const h = ev => {
+      const el = ev.target; if (!el.dataset.adm) return;
+      const k = el.dataset.adm;
+      if (k.startsWith('__')) S.adm[k] = el.value;
+      else {
+        const [g, f] = k.split('.'); const a = S.adm[g] || (S.adm[g] = {});
+        if (f === 'peremption') { a.perRaw = el.value; a.peremption = parseExp(el.value); }
+        else a[f] = f === 'lot' ? el.value.toUpperCase() : el.value;
+      }
+      // pas de re-rendu de la liste pendant la saisie (préserve le focus)
+      $$('[id^="exp-"]').forEach(sp => { const a = S.adm[sp.id.slice(4)]; if (a) sp.textContent = expMsg(a); });
+      if (ev.type === 'change' && el.tagName === 'SELECT') renderAdm(); else renderAtt();
+    };
+    $('#adm-list').addEventListener('input', h); $('#adm-list').addEventListener('change', h);
+    $$('[data-a]').forEach(el => el.addEventListener('change', () => { S.trace[el.dataset.a] = el.checked; renderAtt(); }));
+    $('#btn-print-att').addEventListener('click', () => { if (!admChecks().length) printDocs(docAttestation()); });
+    $('#btn-mss').addEventListener('click', () => {
+      const txt = mssText();
+      const box = $('#adm-msg');
+      box.innerHTML = (S.input.patient.consentMT !== true ? '<div class="msg alerte">Le patient n’a pas consenti à la transmission : il informe lui-même son médecin.</div>' : '') +
+        '<textarea class="inp copyarea" readonly>' + esc(txt) + '</textarea><div class="row" style="margin-top:6px"><button class="btn sm" type="button" id="mss-copy">Copier le message</button>' + (S.input.patient.mss ? '<span class="badge">À envoyer à : ' + esc(S.input.patient.mss) + '</span>' : '') + '</div>';
+      $('#mss-copy').addEventListener('click', () => { copy(txt); });
+    });
+    $('#btn-journal').addEventListener('click', () => {
+      const errs = admChecks(); if (errs.length) { toast('Compléter l’acte avant l’enregistrement'); return; }
+      const jr = journal(); const p = S.input.patient; const ph = admPharm();
+      lines().forEach(l => { const a = S.adm[l.it.groupe] || {}; jr.push({ date: S.adm.__date, heure: S.adm.__heure, nom: (p.nom || '').toUpperCase(), prenom: p.prenom, ddn: p.ddn, vaccin: l.p.nom, valence: l.it.label, dose: l.dose, lot: a.lot, peremption: a.peremption, voie: a.voie || l.voie, site: a.site, pharmacien: ph ? ph.prenom + ' ' + ph.nom : '' }); });
+      try { localStorage.setItem(LS_JR, JSON.stringify(jr)); toast('Acte enregistré au registre local'); } catch (e) { toast('Registre : enregistrement impossible'); }
+    });
+  }
+  function journal() { try { return JSON.parse(localStorage.getItem(LS_JR) || '[]'); } catch (e) { return []; } }
+
+  /* --------------------------------------------- navigation */
+  function go(n) {
+    n = +n; S.step = n;
+    $$('.panel').forEach(p => p.classList.toggle('on', +p.dataset.panel === n));
+    $$('.step').forEach(b => { const k = +b.dataset.step; b.toggleAttribute('aria-current', k === n); if (k === n) b.setAttribute('aria-current', 'step'); b.classList.toggle('done', k < n); });
+    if (n === 2) markMissing(false);
+    if (n === 4) { compute(); renderReco(); }
+    if (n === 5) { compute(); renderOrdo(); }
+    if (n === 6) { compute(); renderAdm(); }
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+  function markMissing(on) {
+    const miss = new Set(missingEntretien().map(x => x[0]));
+    $$('[data-panel="2"] .yn').forEach(el => { const k = el.dataset.p.split('.').pop(); el.classList.toggle('missing', on && miss.has(k)); });
+  }
+  function newPatient() {
+    S.input = blankInput(); S.sel = {}; S.adm = {}; S.derog = {}; S.trace = { ordonnancier: true };
+    $('#confirm-entretien').checked = false; $('#print-root').innerHTML = '';
+    writeControls(); onInputChange(); go(1);
+  }
+
+  /* --------------------------------------------- en-tête */
+  function renderHeader() {
+    const o = SET.officine;
+    $('#hdr-off').textContent = o.nom ? o.nom + (o.ville ? ' — ' + o.ville : '') : 'Officine non paramétrée — ouvrir Paramètres';
+    const cur = localStorage.getItem(LS_PH);
+    $('#hdr-pharm').innerHTML = SET.pharmaciens.length ? SET.pharmaciens.map(p => '<option value="' + p.id + '"' + (p.id === cur ? ' selected' : '') + '>' + esc(p.prenom + ' ' + p.nom) + (p.declare ? '' : ' (non déclaré)') + '</option>').join('') : '<option value="">Aucun pharmacien</option>';
+  }
+  function refresh() { compute(); if (S.step === 4) renderReco(); if (S.step === 5) renderOrdo(); if (S.step === 6) renderAdm(); }
+
+  /* --------------------------------------------- paramètres (modale) */
+  let adminOK = false;
+  function openAdmin() {
+    if (SET.pinHash && !adminOK) {
+      $('#pin-in').value = ''; $('#pin-err').textContent = '';
+      $('#dlg-pin').showModal(); setTimeout(() => $('#pin-in').focus(), 30); return;
+    }
+    renderAdmin(); $('#dlg-admin').showModal();
+  }
+  function renderAdmin() {
+    $$('[data-s]').forEach(el => { const v = getPath(SET, el.dataset.s); if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v; });
+    $('#logo-prev').src = SET.officine.logo || ''; $('#logo-prev').hidden = !SET.officine.logo;
+    $('#ph-table tbody').innerHTML = SET.pharmaciens.map((p, i) => '<tr data-i="' + i + '">' +
+      '<td><input class="inp" data-ph="nom" value="' + esc(p.nom) + '"></td><td><input class="inp" data-ph="prenom" value="' + esc(p.prenom) + '"></td>' +
+      '<td><select class="inp" data-ph="statut">' + ['titulaire', 'adjoint', 'remplaçant', 'gérant'].map(s => '<option' + (s === p.statut ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></td>' +
+      '<td><input class="inp" data-ph="rpps" value="' + esc(p.rpps) + '" inputmode="numeric" maxlength="11"></td>' +
+      '<td><label class="chk"><input type="checkbox" data-ph="declare"' + (p.declare ? ' checked' : '') + '> oui</label></td>' +
+      '<td><button class="btn sm danger" type="button" data-ph-del="' + i + '">Supprimer</button></td></tr>').join('') ||
+      '<tr><td colspan="6" style="color:var(--ink-3)">Aucun pharmacien enregistré.</td></tr>';
+    const over = SET.catalogue || {};
+    $('#cat-table tbody').innerHTML = PRODUITS.map(p0 => { const p = Object.assign({}, p0, over[p0.id] || {});
+      return '<tr><td><input type="checkbox" data-cat="' + p.id + '.actif"' + (p.actif !== false ? ' checked' : '') + '></td>' +
+        '<td><input class="inp" data-cat="' + p.id + '.nom" value="' + esc(p.nom) + '"></td><td>' + esc(GROUPES[p.groupe] ? GROUPES[p.groupe].court : p.groupe === 'hepab' ? 'Hépatites A+B' : p.groupe) + '</td>' +
+        '<td>' + (p.ageMin != null ? (p.ageMin < 1 ? Math.round(p.ageMin * 12) + ' mois' : p.ageMin + ' ans') : '') + (p.ageMax != null ? ' – ' + p.ageMax + ' ans' : ' et +') + '</td><td>' + p.voies.join(', ') + '</td>' +
+        '<td>' + Object.keys(ALLERGENES).map(a => '<label class="chk" style="padding:0;font-size:12.5px"><input type="checkbox" data-cat="' + p.id + '.al.' + a + '"' + ((p.allergenes || []).includes(a) ? ' checked' : '') + '> ' + a + '</label>').join('') + '</td></tr>'; }).join('');
+    $('#cfg-src').textContent = 'paramètres ' + CFG_SOURCE + ' — révision ' + (SET.revision || 0);
+    $('#jr-count').textContent = journal().length + ' acte(s)';
+  }
+  function bindAdmin() {
+    $('#btn-admin').addEventListener('click', openAdmin);
+    $('#pin-cancel').addEventListener('click', () => $('#dlg-pin').close());
+    $('#pin-form').addEventListener('submit', ev => {
+      ev.preventDefault();
+      if (hashPin($('#pin-in').value) === SET.pinHash) { adminOK = true; $('#dlg-pin').close(); renderAdmin(); $('#dlg-admin').showModal(); }
+      else $('#pin-err').textContent = 'Code incorrect.';
+    });
+    $('#adm-close').addEventListener('click', () => { $('#dlg-admin').close(); });
+    $('#dlg-admin').addEventListener('close', () => { adminOK = false; renderHeader(); refresh(); });
+    $$('.tab').forEach(t => t.addEventListener('click', () => {
+      $$('.tab').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+      $$('.tpanel').forEach(p => p.classList.toggle('on', p.dataset.tp === t.dataset.tab));
+    }));
+    $$('.tab')[0].click();
+    $('#dlg-admin').addEventListener('change', ev => {
+      const el = ev.target;
+      if (el.dataset.s) { setPath(SET, el.dataset.s, el.type === 'checkbox' ? el.checked : (el.type === 'number' ? +el.value : el.value.trim())); saveSettings(); }
+      if (el.dataset.ph) {
+        const i = +el.closest('tr').dataset.i; const p = SET.pharmaciens[i];
+        p[el.dataset.ph] = el.type === 'checkbox' ? el.checked : el.value.trim();
+        if (el.dataset.ph === 'rpps' && p.rpps && !/^\d{11}$/.test(p.rpps)) toast('Le RPPS comporte 11 chiffres');
+        saveSettings(); renderHeader();
+      }
+      if (el.dataset.cat) {
+        const [id, k, a] = el.dataset.cat.split('.');
+        SET.catalogue = SET.catalogue || {}; const o = SET.catalogue[id] || (SET.catalogue[id] = {});
+        if (k === 'actif') o.actif = el.checked;
+        else if (k === 'nom') o.nom = el.value.trim() || PRODUITS.find(p => p.id === id).nom;
+        else if (k === 'al') { const base = (o.allergenes || PRODUITS.find(p => p.id === id).allergenes).slice(); const ix = base.indexOf(a); if (el.checked && ix < 0) base.push(a); if (!el.checked && ix >= 0) base.splice(ix, 1); o.allergenes = base; }
+        saveSettings();
+      }
+    });
+    $('#dlg-admin').addEventListener('click', ev => {
+      const d = ev.target.closest('[data-ph-del]');
+      if (d) { const i = +d.dataset.phDel; if (confirm('Supprimer ce pharmacien ?')) { SET.pharmaciens.splice(i, 1); saveSettings(); renderAdmin(); renderHeader(); } }
+    });
+    $('#ph-add').addEventListener('click', () => { SET.pharmaciens.push({ id: 'ph' + Date.now().toString(36), nom: '', prenom: '', statut: 'titulaire', rpps: '', declare: false }); saveSettings(); renderAdmin(); renderHeader(); });
+    $('#logo-in').addEventListener('change', ev => {
+      const f = ev.target.files[0]; if (!f) return;
+      if (f.size > 400000) { toast('Logo trop lourd (400 Ko max.)'); return; }
+      const rd = new FileReader(); rd.onload = () => { SET.officine.logo = rd.result; saveSettings(); renderAdmin(); }; rd.readAsDataURL(f);
+    });
+    $('#logo-del').addEventListener('click', () => { SET.officine.logo = ''; saveSettings(); renderAdmin(); });
+    $('#cfg-export').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(SET, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'config.json'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      $('#cfg-info').textContent = 'Exporté (révision ' + SET.revision + '). Importez ce fichier sur les autres postes ou déposez-le sur le serveur sous le nom config.json.';
+    });
+    $('#cfg-import').addEventListener('change', ev => {
+      const f = ev.target.files[0]; if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => { try { const o = JSON.parse(rd.result); if (!o || typeof o !== 'object' || !o.officine) throw new Error('format'); SET = merge(DEFAULTS, o); saveSettings(false); renderAdmin(); renderHeader(); toast('Paramètres importés (révision ' + (SET.revision || 0) + ')'); } catch (e) { toast('Fichier de paramètres invalide'); } };
+      rd.readAsText(f); ev.target.value = '';
+    });
+    $('#cfg-reset').addEventListener('click', () => { if (confirm('Réinitialiser tous les paramètres de ce poste ?')) { SET = merge(DEFAULTS, {}); saveSettings(); renderAdmin(); renderHeader(); } });
+    $('#pin-save').addEventListener('click', () => { const v = $('#pin-new').value; SET.pinHash = v ? hashPin(v) : ''; saveSettings(); $('#pin-new').value = ''; toast(v ? 'Code PIN enregistré' : 'Code PIN supprimé'); });
+    $('#jr-export').addEventListener('click', () => {
+      const jr = journal(); if (!jr.length) { toast('Registre vide'); return; }
+      const cols = ['date', 'heure', 'nom', 'prenom', 'ddn', 'vaccin', 'valence', 'dose', 'lot', 'peremption', 'voie', 'site', 'pharmacien'];
+      const csv = '﻿' + cols.join(';') + '\n' + jr.map(r => cols.map(c => '"' + String(r[c] == null ? '' : r[c]).replace(/"/g, '""') + '"').join(';')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'registre-vaccinations-' + TODAY + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+    });
+    $('#jr-purge').addEventListener('click', () => { if (confirm('Vider définitivement le registre local de ce poste ?')) { localStorage.removeItem(LS_JR); renderAdmin(); } });
+  }
+
+  /* --------------------------------------------- utilitaires */
+  let tt;
+  function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2600); }
+  function copy(txt) {
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(() => toast('Message copié'), () => fallback());
+    else fallback();
+    function fallback() { const ta = $('#adm-msg textarea'); if (ta) { ta.removeAttribute('readonly'); ta.select(); document.execCommand('copy'); ta.setAttribute('readonly', ''); toast('Message copié'); } }
+  }
+
+  /* --------------------------------------------- démarrage */
+  function init() {
+    buildForms(); bindInputs(); bindReco(); bindAdm(); bindAdmin();
+    $$('[data-go]').forEach(b => b.addEventListener('click', () => {
+      if (+b.dataset.go === 3 && S.step === 2 && missingEntretien().length) { markMissing(true); toast('Entretien incomplet : questions signalées en rouge'); }
+      go(b.dataset.go);
+    }));
+    $$('.step').forEach(b => b.addEventListener('click', () => go(b.dataset.step)));
+    $('#btn-new').addEventListener('click', () => { if (confirm('Effacer la saisie en cours et commencer un nouveau patient ?')) newPatient(); });
+    $('#btn-new2').addEventListener('click', () => { if (confirm('Terminer et effacer la saisie de ce patient ?')) newPatient(); });
+    $('#hdr-pharm').addEventListener('change', () => { try { localStorage.setItem(LS_PH, $('#hdr-pharm').value); } catch (e) {} refresh(); });
+    $('#confirm-entretien').addEventListener('change', renderOrdo);
+    $('#btn-print-ordo').addEventListener('click', () => { if (checksOrdo().every(x => x[0])) printDocs(docOrdonnance(false) + ($('#opt-copie').checked ? docOrdonnance(true) : '')); });
+    $('#btn-print-fiche').addEventListener('click', () => printDocs(docFiche()));
+    $('#ver').textContent = 'Version ' + window.VP.version + (qsDate ? ' — date simulée : ' + D.fr(TODAY) : '') + '.';
+    renderHeader(); writeControls(); onInputChange(); go(1);
+    loadShared();
+    if (!SET.officine.nom) setTimeout(() => toast('Premier lancement : renseignez l’officine et les pharmaciens dans Paramètres'), 600);
+    if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+  window.addEventListener('afterprint', () => { $('#print-root').innerHTML = ''; });
+  document.addEventListener('DOMContentLoaded', init);
+  window.VPApp = { S, go, compute, lines, docOrdonnance, docAttestation, docFiche, settings: () => SET };
+})();
+</script>
+</body>
+</html>
