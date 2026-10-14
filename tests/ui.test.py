@@ -77,6 +77,7 @@ with sync_playwright() as pw:
         box = pg.query_selector(f'[data-sel="{g}.on"]')
         if box and box.is_checked(): box.uncheck()
     pg.select_option('[data-sel="grippe.produit"]', 'vaxigrip')
+    pg.click('[data-mode="pneumo.deliv"]')
     pg.click('[data-panel="4"] [data-go="5"]')
 
     # 5. ordonnance
@@ -88,6 +89,9 @@ with sync_playwright() as pw:
     check('+33 4 00 00 00 00' in prev and 'France' in prev, 'ordonnance : téléphone international et mention France')
     check('voie sous-cutanée' in prev, 'ordonnance : voie SC retenue sous anticoagulant')
     check('L. 5125-1-1 A' in prev, 'ordonnance : base légale mentionnée')
+    check('Acte d’injection' in prev or 'Acte d\u2019injection' in prev, 'ordonnance : acte d’injection prescrit pour la grippe')
+    check('Délivrance seule' in prev and '+2 °C' in prev, 'ordonnance : délivrance seule pour le pneumocoque, sur la même ordonnance')
+    check(pg.query_selector('#opt-copie') is None and 'Copie conservée' not in prev, 'plus de copie officine')
     pg.screenshot(path=os.path.join(OUT, '2-ordonnance.png'), full_page=True)
 
     # pharmacien non déclaré → blocage
@@ -96,7 +100,7 @@ with sync_playwright() as pw:
     pg.select_option('#hdr-pharm', 'p1')
 
     # PDF de l'ordonnance (rendu impression)
-    html = pg.evaluate("() => VPApp.docOrdonnance(false) + VPApp.docFiche()")
+    html = pg.evaluate("() => VPApp.docOrdonnance() + VPApp.docFiche()")
     pg.evaluate("h => { document.getElementById('print-root').innerHTML = h; }", html)
     pg.emulate_media(media='print')
     pg.pdf(path=os.path.join(OUT, 'ordonnance.pdf'), format='A4', print_background=True, margin={'top': '0', 'bottom': '0', 'left': '0', 'right': '0'})
@@ -106,16 +110,25 @@ with sync_playwright() as pw:
     # 6. administration
     pg.click('[data-panel="5"] [data-go="6"]')
     check(pg.is_disabled('#btn-print-att'), 'attestation bloquée sans lot / péremption')
-    pg.fill('[data-adm="grippe.lot"]', 'ab123c')
-    pg.fill('[data-adm="grippe.peremption"]', '12/2025')
-    pg.press('[data-adm="grippe.peremption"]', 'Tab')
-    check('PÉRIMÉ' in pg.inner_text('#adm-msg'), 'vaccin périmé détecté')
-    pg.fill('[data-adm="grippe.peremption"]', '06/2027'); pg.press('[data-adm="grippe.peremption"]', 'Tab')
-    pg.fill('[data-adm="pneumo.lot"]', 'PN987'); pg.fill('[data-adm="pneumo.peremption"]', '01/2028'); pg.press('[data-adm="pneumo.peremption"]', 'Tab')
+    check(pg.query_selector('[data-adm="pneumo.site"]') is None, 'délivrance seule : pas de voie/site à saisir')
+    # scan douchette (frappe clavier sans champ actif) — CIP inconnu → association puis mémorisation
+    def gtin(cip12):
+        g = '0' + cip12; t = sum(int(d) * (3 if i % 2 == 0 else 1) for i, d in enumerate(reversed(g))); return g + str((10 - t % 10) % 10)
+    G1 = gtin('340093000001'); G2 = gtin('340093000002')
+    pg.evaluate("() => document.activeElement && document.activeElement.blur()"); pg.keyboard.type('01' + G1 + '1725123110AB123C21SN0001'); pg.keyboard.press('Enter')
+    pg.click('[data-assoc]:has-text("Vaxigrip")')
+    check('PÉRIMÉ' in pg.inner_text('#scan-msg') and 'PÉRIMÉ' in pg.inner_text('#adm-msg'), 'scan : vaccin périmé détecté')
+    pg.fill('#scan-in', '(01)' + G1 + '(17)270630(10)AB123C(21)SN0002'); pg.press('#scan-in', 'Enter')
+    check(pg.input_value('[data-adm="grippe.lot"]') == 'AB123C' and pg.input_value('[data-adm="grippe.peremption"]') == '06/2027', 'scan : CIP mémorisé, lot et péremption remplis')
+    check(pg.evaluate("() => (VPApp.settings().catalogue.vaxigrip || {}).cips.length") == 1, 'scan : CIP enregistré dans le catalogue')
+    pg.fill('#scan-in', '01' + G2 + '17280131' + '10PN987'); pg.press('#scan-in', 'Enter')
+    pg.click('[data-assoc]:has-text("Prevenar")')
+    check(pg.input_value('[data-adm="pneumo.lot"]') == 'PN987', 'scan : délivrance seule renseignée (lot)')
     pg.check('[data-a="dmp"]'); pg.check('[data-a="mtTransmis"]')
     check(not pg.is_disabled('#btn-print-att'), 'attestation imprimable une fois l’acte complet')
     att = pg.inner_text('#att-preview')
     check('AB123C' in att and '06/2027' in att and '2023-736' in att, 'attestation : lot, péremption, décret 2023-736')
+    check('Prevenar' not in att, 'attestation : le vaccin seulement délivré n’y figure pas')
     pg.click('#btn-mss')
     check('Cher Confrère' in pg.input_value('#adm-msg textarea'), 'message MSSanté généré')
     pg.screenshot(path=os.path.join(OUT, '3-administration.png'), full_page=True)

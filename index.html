@@ -126,7 +126,9 @@ main{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
 .rc .al{color:#6e4100}
 .rc .meta{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-top:8px}
 .rc .meta b{color:var(--ink)}
-.rc .presc{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr 120px 1fr;gap:8px 12px;align-items:end}
+.rc .presc{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr 110px 1fr;gap:8px 12px;align-items:end}
+.rc .presc .acte{grid-column:2/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rc .presc .acte .lab{margin:0}
 .rc .presc .f{min-width:0}
 .rc .excl{font-size:12px;color:var(--ink-3);margin-top:6px}
 .rc details{margin-top:6px}
@@ -174,6 +176,16 @@ dialog::backdrop{background:rgba(10,20,16,.45)}
 table.t{border-collapse:collapse;width:100%;font-size:13.5px}
 table.t th,table.t td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
+.scan-row{display:flex;gap:8px;align-items:stretch}
+.scan-row .inp{flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.scan-card{border-color:#b9d9cd;background:linear-gradient(0deg,var(--surface),var(--accent-soft))}
+.scan-ok{color:var(--ok);font-weight:650}
+.adm.deliv{background:#fff;border-style:dashed}
+.mode{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--r-sm);overflow:hidden}
+.mode button{border:0;background:#fff;padding:7px 12px;cursor:pointer;color:var(--ink-2);font-size:13.5px}
+.mode button+button{border-left:1px solid var(--line-2)}
+.mode button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:650}
+#cam-video{width:100%;max-height:60vh;background:#000;border-radius:var(--r-sm)}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#17221e;color:#fff;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 .foot{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--ink-3);font-size:12.5px}
@@ -182,6 +194,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
 @media (max-width:1000px){
   .rc .presc{grid-template-columns:1fr 1fr}
   .rc .presc .toggle{grid-column:1/-1}
+  .rc .presc .acte{grid-column:1/-1}
 }
 /* ---------- écrans tactiles : cibles ≥ 44 px, police 16 px (pas de zoom automatique à la saisie) */
 @media (pointer:coarse), (max-width:760px){
@@ -219,6 +232,8 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
   .card h2{flex-wrap:wrap}
   .rc{padding:12px 11px}
   .rc .presc{grid-template-columns:1fr}
+  .rc .presc .acte{grid-column:auto}
+  .mode{display:flex;width:100%}.mode button{flex:1;padding:10px 6px}
   .rc .meta{flex-direction:column;gap:4px}
   .q{gap:10px;align-items:flex-start}
   .q .yn button{padding:10px 13px;min-width:54px}
@@ -314,7 +329,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
   <button class="step" data-step="3" type="button"><span class="n">3</span><span class="lbl">Profil &amp; antécédents</span></button>
   <button class="step" data-step="4" type="button"><span class="n">4</span><span class="lbl">Recommandations</span><span class="cnt" id="cnt-reco" hidden></span></button>
   <button class="step" data-step="5" type="button"><span class="n">5</span><span class="lbl">Ordonnance</span></button>
-  <button class="step" data-step="6" type="button"><span class="n">6</span><span class="lbl">Administration &amp; traçabilité</span></button>
+  <button class="step" data-step="6" type="button"><span class="n">6</span><span class="lbl">Délivrance &amp; vaccination</span></button>
 </nav>
 
 <main id="app">
@@ -443,21 +458,31 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     <label class="chk" style="margin-top:10px"><input type="checkbox" id="confirm-entretien"> J'atteste avoir réalisé l'entretien préalable, informé le patient des bénéfices et risques de la vaccination et recueilli son consentement.</label>
     <div id="derog-box"></div>
     <div class="row" style="margin-top:12px">
-      <label class="chk"><input type="checkbox" id="opt-copie" checked> Imprimer aussi une copie pour l'officine</label>
       <span class="spacer"></span>
       <button class="btn" id="btn-print-fiche" type="button">Imprimer la fiche d'entretien</button>
       <button class="btn pri" id="btn-print-ordo" type="button">Imprimer l'ordonnance</button>
     </div>
   </div>
   <div class="preview" id="ordo-preview"></div>
-  <div class="nav"><button class="btn" data-go="4" type="button">← Recommandations</button><button class="btn pri" data-go="6" type="button">Administration &amp; traçabilité →</button></div>
+  <div class="nav"><button class="btn" data-go="4" type="button">← Recommandations</button><button class="btn pri" data-go="6" type="button">Délivrance &amp; vaccination →</button></div>
 </section>
 
 <!-- ============================================================ 6 ADMINISTRATION -->
 <section class="panel" data-panel="6">
+  <div class="card scan-card">
+    <h2>Scanner la boîte <span class="tag">Datamatrix : produit, lot et péremption renseignés automatiquement</span></h2>
+    <div class="scan-row">
+      <label class="sr" for="scan-in">Code Datamatrix</label>
+      <input id="scan-in" class="inp" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Scannez le Datamatrix avec la douchette…">
+      <button class="btn" type="button" id="scan-cam" hidden>📷 Caméra</button>
+      <button class="btn" type="button" id="scan-go">Valider</button>
+    </div>
+    <div id="scan-msg"></div>
+  </div>
   <div class="card">
-    <h2>Acte vaccinal <span class="tag">numéro de lot, péremption, voie et site sont obligatoires pour la traçabilité</span></h2>
+    <h2>Délivrance et acte vaccinal <span class="tag">lot, péremption, voie et site obligatoires pour chaque vaccin injecté</span></h2>
     <div id="adm-list"></div>
+    <div id="adm-trace">
     <h3>Traçabilité</h3>
     <div class="chkgrid">
       <label class="chk"><input type="checkbox" data-a="dmp"> Vaccination enregistrée dans le DMP (Mon espace santé)</label>
@@ -470,6 +495,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       <button class="btn" id="btn-journal" type="button" hidden>Enregistrer au registre local</button>
       <span class="spacer"></span>
       <button class="btn pri" id="btn-print-att" type="button">Imprimer l'attestation de vaccination</button>
+    </div>
     </div>
     <div id="adm-msg" style="margin-top:10px"></div>
   </div>
@@ -542,8 +568,8 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       </div>
     </div>
     <div class="tpanel" data-tp="cat">
-      <p class="lead">Décochez une spécialité non commercialisée ou indisponible ; ajustez sa dénomination (variant Covid de la campagne) ou ses allergènes. La composition est indicative : toujours vérifier le RCP.</p>
-      <div style="overflow:auto"><table class="t" id="cat-table"><thead><tr><th>Actif</th><th>Spécialité</th><th>Valence</th><th>Âge AMM</th><th>Voies</th><th>Allergènes</th></tr></thead><tbody></tbody></table></div>
+      <p class="lead">Décochez une spécialité non commercialisée ou indisponible ; ajustez sa dénomination (variant Covid de la campagne) ou ses allergènes. La composition est indicative : toujours vérifier le RCP. Les codes CIP13 sont appris automatiquement au premier scan d’une boîte.</p>
+      <div style="overflow:auto"><table class="t" id="cat-table"><thead><tr><th>Actif</th><th>Spécialité</th><th>Valence</th><th>Âge AMM</th><th>Voies</th><th>Allergènes</th><th>CIP13 (Datamatrix)</th></tr></thead><tbody></tbody></table></div>
     </div>
     <div class="tpanel" data-tp="sync">
       <p class="lead">Les paramètres sont enregistrés dans ce navigateur. Pour équiper les autres postes : exportez le fichier, puis importez-le sur chaque poste. Sur le serveur, déposez ce fichier sous le nom <code>config.json</code> à côté de <code>index.html</code> : tous les postes le chargeront automatiquement.</p>
@@ -562,6 +588,10 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
   </div>
 </dialog>
 
+<dialog id="dlg-cam">
+  <div class="dlg-h"><h2>Scanner avec la caméra</h2><button class="btn sm" type="button" id="cam-close">Fermer</button></div>
+  <div class="dlg-b"><video id="cam-video" playsinline muted></video><p class="lead" id="cam-msg" style="margin-top:8px">Placez le Datamatrix de la boîte dans le cadre.</p></div>
+</dialog>
 <div id="print-root" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status"></div>
 <script id="vp-engine">
@@ -1476,7 +1506,121 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     return '1 dose — 1 injection par ' + v + (site ? ' (' + site + ')' : (voie === 'SC' ? '' : ' (muscle deltoïde)'));
   }
 
-  root.VP = { D, PRODUITS, ALLERGENES, GROUPES, STATUTS, evaluate, buildContext, prochainRappelDTP, produitsDisponibles, posologie, version: '1.1.0' };
+  root.VP = { D, PRODUITS, ALLERGENES, GROUPES, STATUTS, evaluate, buildContext, prochainRappelDTP, produitsDisponibles, posologie, version: '1.2.0' };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script id="vp-gs1">
+/* =====================================================================
+   LECTURE DU DATAMATRIX GS1 DES BOÎTES DE MÉDICAMENTS
+   (01) GTIN-14 = « 0 » + CIP13 · (17) péremption AAMMJJ · (10) lot · (21) n° de série
+   Accepte : format avec parenthèses, chaîne brute avec séparateur GS (FNC1),
+   chaîne brute sans séparateur (douchette en émulation clavier), préfixe
+   d'identification « ]d2 », et douchette configurée en QWERTY sur un poste AZERTY.
+   ===================================================================== */
+(function (root) {
+  'use strict';
+  const GS = '\x1d';
+  const FIX = { '00': 18, '01': 14, '02': 14, '11': 6, '12': 6, '13': 6, '15': 6, '16': 6, '17': 6, '20': 2 };
+  const VAR = { '10': 20, '21': 20, '22': 20, '30': 8, '240': 30, '241': 30, '710': 20, '711': 20, '712': 20, '713': 20, '714': 20 };
+  const CORE = ['01', '17', '10', '21'];
+  // douchette QWERTY tapant sur un clavier AZERTY
+  const AZ = { 'à': '0', '&': '1', 'é': '2', '"': '3', "'": '4', '(': '5', '-': '6', 'è': '7', '_': '8', 'ç': '9', 'Q': 'A', 'A': 'Q', 'W': 'Z', 'Z': 'W', '?': 'M', 'q': 'a', 'a': 'q', 'w': 'z', 'z': 'w', ',': 'm', '§': '!' };
+
+  function gtinCheck(d13) {
+    let s = 0;
+    for (let i = 0; i < d13.length; i++) s += (+d13[d13.length - 1 - i]) * (i % 2 === 0 ? 3 : 1);
+    return String((10 - (s % 10)) % 10);
+  }
+  function validGtin(g) { return /^\d{14}$/.test(g) && gtinCheck(g.slice(0, 13)) === g[13]; }
+  function validDate(v) { if (!/^\d{6}$/.test(v)) return false; const m = +v.slice(2, 4), d = +v.slice(4, 6); return m >= 1 && m <= 12 && d <= 31; }
+
+  function normalize(raw) {
+    let s = String(raw == null ? '' : raw);
+    s = s.replace(/<GS>|\{GS\}|\[GS\]|\\x1d|\\u001d|␝/gi, GS).replace(/[\r\n\t]+$/g, '').replace(/^[\r\n\t ]+|[ ]+$/g, '');
+    s = s.replace(/^\][dCQe]\d/, '');
+    let azerty = false;
+    if (/^(à&|\(à&\))/.test(s)) { azerty = true; s = s.split('').map(ch => AZ[ch] != null ? AZ[ch] : ch).join(''); }
+    return { s, azerty };
+  }
+
+  function aiAt(s, i) {
+    for (const n of [2, 3]) { const a = s.substr(i, n); if (FIX[a] || VAR[a]) return a; }
+    return null;
+  }
+
+  /* toutes les décompositions complètes de la chaîne brute */
+  function decompose(s) {
+    const out = [];
+    (function rec(i, acc) {
+      if (out.length > 200) return;
+      if (i >= s.length) { out.push(acc.slice()); return; }
+      if (s[i] === GS) return rec(i + 1, acc);
+      const ai = aiAt(s, i); if (!ai) return;
+      const j = i + ai.length;
+      if (FIX[ai]) {
+        const v = s.substr(j, FIX[ai]);
+        if (v.length !== FIX[ai] || v.indexOf(GS) >= 0) return;
+        acc.push([ai, v]); rec(j + FIX[ai], acc); acc.pop(); return;
+      }
+      const gs = s.indexOf(GS, j);
+      if (gs >= 0) {
+        const v = s.slice(j, gs);
+        if (v.length && v.length <= VAR[ai]) { acc.push([ai, v]); rec(gs + 1, acc); acc.pop(); }
+        return;
+      }
+      const maxL = Math.min(VAR[ai], s.length - j);
+      for (let L = maxL; L >= 1; L--) { acc.push([ai, s.substr(j, L)]); rec(j + L, acc); acc.pop(); }
+    })(0, []);
+    return out;
+  }
+
+  function score(fields) {
+    const m = {}; let bad = 0, dup = 0;
+    for (const [a, v] of fields) { if (m[a] != null) dup++; m[a] = v; }
+    if (m['01'] && !validGtin(m['01'])) bad++;
+    if (m['17'] && !validDate(m['17'])) bad++;
+    if (bad || dup) return null;
+    const core = CORE.filter(a => m[a] != null).length;
+    const other = fields.length - fields.filter(f => CORE.includes(f[0])).length;
+    const lot = (m['10'] || '').length, sn = (m['21'] || '').length;
+    return [core, -other, lot >= 3 ? 1 : 0, sn, -lot];
+  }
+  function better(a, b) { for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) return a[i] > b[i]; } return false; }
+
+  function parse(raw) {
+    const n = normalize(raw);
+    const s = n.s;
+    let fields = null;
+    if (/^\(\d{2,4}\)/.test(s)) {
+      fields = [];
+      const re = /\((\d{2,4})\)([^(]*)/g; let m;
+      while ((m = re.exec(s))) fields.push([m[1], m[2].replace(new RegExp(GS, 'g'), '').trim()]);
+    } else if (/^\d{2}/.test(s)) {
+      let best = null, bs = null;
+      for (const f of decompose(s)) { const sc = score(f); if (sc && (!bs || better(sc, bs))) { best = f; bs = sc; } }
+      fields = best;
+    }
+    if (!fields || !fields.length) return { ok: false, erreur: 'Code non reconnu (Datamatrix GS1 attendu)', raw: String(raw) };
+    const r = { ok: true, raw: String(raw), azerty: n.azerty, ais: {} };
+    for (const [a, v] of fields) r.ais[a] = v;
+    const g = r.ais['01'];
+    if (!g) return { ok: false, erreur: 'Code produit (01) absent', raw: r.raw };
+    if (!validGtin(g)) return { ok: false, erreur: 'Code produit illisible (clé de contrôle invalide) — rescanner', raw: r.raw };
+    r.gtin = g;
+    r.cip13 = g[0] === '0' ? g.slice(1) : g;
+    r.lot = r.ais['10'] || '';
+    r.serie = r.ais['21'] || '';
+    const e = r.ais['17'];
+    if (e && validDate(e)) {
+      const y = 2000 + +e.slice(0, 2), mo = +e.slice(2, 4), d = +e.slice(4, 6);
+      const last = new Date(y, mo, 0).getDate();
+      r.peremption = y + '-' + String(mo).padStart(2, '0');
+      r.peremptionJour = r.peremption + '-' + String(d === 0 ? last : d).padStart(2, '0');
+    }
+    return r;
+  }
+
+  root.GS1 = { parse, normalize, validGtin, gtinCheck, GS };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script id="vp-app">
@@ -1730,7 +1874,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     // préserver / initialiser les sélections
     for (const it of S.result.items) {
       const k = it.groupe === 'autres' ? null : it.groupe; if (!k) continue;
-      const s = S.sel[k] || (S.sel[k] = { on: false, produit: '', voie: '', dose: '', touched: false });
+      const s = S.sel[k] || (S.sel[k] = { on: false, produit: '', voie: '', dose: '', mode: 'inj', touched: false });
       const ids = it.produits.map(p => p.id);
       if (!ids.includes(s.produit)) s.produit = ids[0] || '';
       if (!s.touched) { s.dose = it.doseLabel || ''; s.on = it.status === 'recommande'; }
@@ -1751,9 +1895,11 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     }).map(it => {
       const s = S.sel[it.groupe];
       const p = it.produits.find(x => x.id === s.produit) || it.produits[0];
-      return { it, s, p, voie: s.voie || (p && p.voies[0]) || 'IM', dose: s.dose || it.doseLabel || '', derog: !prescribable(it) ? S.derog[it.groupe] : '' };
+      return { it, s, p, voie: s.voie || (p && p.voies[0]) || 'IM', dose: s.dose || it.doseLabel || '', mode: s.mode === 'deliv' ? 'deliv' : 'inj', derog: !prescribable(it) ? S.derog[it.groupe] : '' };
     }).filter(l => l.p).filter((l, i, arr) => arr.findIndex(x => x.p.id === l.p.id) === i);
   }
+
+  const injLines = () => lines().filter(l => l.mode === 'inj');
 
   /* ----------------------------------------- rendu des recommandations */
   function fmtDate(d) { return d ? D.fr(d) : ''; }
@@ -1796,6 +1942,9 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       '<div class="f"><label>Spécialité</label><select data-sel="' + g + '.produit">' + it.produits.map(x => '<option value="' + x.id + '"' + (x.id === s.produit ? ' selected' : '') + '>' + esc(x.nom) + '</option>').join('') + '</select></div>' +
       '<div class="f"><label>Voie</label><select data-sel="' + g + '.voie">' + voies.map(v => '<option' + (v === s.voie ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
       '<div class="f"><label>Rang / nature de la dose</label><input data-sel="' + g + '.dose" value="' + esc(s.dose) + '"></div>' +
+      '<div class="acte"><span class="lab">Acte :</span><span class="mode" role="group" aria-label="Acte">' +
+        '<button type="button" data-mode="' + g + '.inj" aria-pressed="' + (s.mode !== 'deliv') + '">Délivrance + injection</button>' +
+        '<button type="button" data-mode="' + g + '.deliv" aria-pressed="' + (s.mode === 'deliv') + '">Délivrance seule</button></span></div>' +
       '</div>' +
       (derog ? '<div class="f" style="margin-top:8px"><label class="req">Justification (consignée sur la fiche d’entretien)</label><textarea rows="2" data-derog="' + g + '" placeholder="Ex. : carnet non présenté, dernière dose non documentée…">' + esc(S.derog[g] || '') + '</textarea></div>' : '') +
       (it.exclus.filter(x => x.raison !== 'hors schéma').length ? '<div class="excl">Spécialités écartées : ' + it.exclus.filter(x => x.raison !== 'hors schéma').map(x => esc(x.nom) + ' (' + esc(x.raison) + ')').join(' ; ') + '</div>' : '');
@@ -1815,6 +1964,12 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       (d ? '<details' + (open ? ' open' : '') + '><summary>Prescrire malgré tout (dérogation justifiée)</summary>' + prescHTML(it, true) + '</details>' : '') + '</div>';
   }
   function bindReco() {
+    $('#reco').addEventListener('click', ev => {
+      const b = ev.target.closest('[data-mode]'); if (!b) return;
+      const [g, m] = b.dataset.mode.split('.'); S.sel[g].mode = m; S.sel[g].touched = true; S.sel[g].on = true;
+      $$('[data-mode^="' + g + '."]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      const cb = $('[data-sel="' + g + '.on"]'); if (cb) cb.checked = true;
+    });
     $('#reco').addEventListener('change', ev => {
       const el = ev.target;
       if (el.dataset.sel) {
@@ -1879,7 +2034,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     $('#derog-box').innerHTML = infos.join('');
     const ok = c.every(x => x[0]);
     $('#btn-print-ordo').disabled = !ok;
-    $('#ordo-preview').innerHTML = L.length ? docOrdonnance(false) : '<p class="lead" style="text-align:center">Sélectionnez au moins un vaccin à l’étape « Recommandations ».</p>';
+    $('#ordo-preview').innerHTML = L.length ? docOrdonnance() : '<p class="lead" style="text-align:center">Sélectionnez au moins un vaccin à l’étape « Recommandations ».</p>';
     fitDocs();
   }
 
@@ -1902,10 +2057,14 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     if (withAM && (p.nir || p.rang || p.organisme)) s += '<div class="am">N° d’immatriculation : ' + esc(p.nir || '—') + (p.rang ? ' · Rang de naissance : ' + esc(p.rang) : '') + (p.organisme ? ' · Code organisme : ' + esc(p.organisme) : '') + '</div>';
     return s + '</div>';
   }
-  function docOrdonnance(copie) {
+  function docOrdonnance() {
     const ph = currentPharmacien(); const o = SET.officine; const L = lines();
+    const voieTxt = v => v === 'SC' ? 'sous-cutanée' : 'intramusculaire';
     const items = L.map(l => '<li><div class="dc">' + esc(l.p.dc) + '</div><div><span class="sp">' + esc(l.p.nom) + '</span> — ' + esc(window.VP.posologie(l.p, l.voie)) + '.</div>' +
-      '<div>Quantité : 1 dose' + (l.dose ? ' — ' + esc(l.dose) : '') + '.</div>' +
+      '<div>Quantité : 1 dose' + (l.dose ? ' — ' + esc(l.dose) : '') + '. QSP 1 injection.</div>' +
+      (l.mode === 'inj'
+        ? '<div><b>+ Acte d\u2019injection</b> : vaccination par voie ' + voieTxt(l.voie) + ' réalisée par le pharmacien à l\u2019officine.</div>'
+        : '<div><b>Délivrance seule</b> : injection par voie ' + voieTxt(l.voie) + ' à réaliser par un professionnel de santé habilité à vacciner. Conserver le vaccin au réfrigérateur (+2 °C à +8 °C) jusqu\u2019à l\u2019injection, sans le congeler.</div>') +
       (l.it.schema ? '<div class="small">Schéma : ' + esc(l.it.schema) + '.</div>' : '') +
       (l.it.prochaine && l.it.totalDoses && l.it.doseRang && l.it.doseRang < l.it.totalDoses ? '<div class="small">Dose suivante à partir du ' + D.fr(l.it.prochaine) + ' (nouvelle prescription).</div>' : '') + '</li>').join('');
     return '<section class="doc">' + enTete(ph) +
@@ -1914,7 +2073,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       '<ol class="lines">' + items + '</ol>' +
       '<div class="legal">Vaccin(s) soumis à prescription médicale, prescrit(s) conformément au calendrier des vaccinations et recommandations vaccinales en vigueur, par un pharmacien d’officine ayant suivi la formation requise et déclaré son activité de prescription au conseil de l’Ordre des pharmaciens (art. L. 5125-1-1 A et R. 5125-33-8 du code de la santé publique ; arrêté du 8 août 2023 modifié fixant la liste des vaccins que certains professionnels de santé sont autorisés à prescrire ou administrer). Entretien préalable réalisé : absence de contre-indication identifiée.</div>' +
       '<div class="sign"><div>Signature du pharmacien prescripteur et cachet de l’officine</div></div>' +
-      '<div class="dfoot"><span>' + (copie ? 'Copie conservée à l’officine' : 'Original remis au patient') + '</span><span>' + esc(o.nom || '') + '</span></div></section>';
+      '<div class="dfoot"><span>Ordonnance — ' + L.length + ' vaccin' + (L.length > 1 ? 's' : '') + (L.some(l => l.mode === 'inj') ? ' dont ' + L.filter(l => l.mode === 'inj').length + ' injecté' + (L.filter(l => l.mode === 'inj').length > 1 ? 's' : '') + ' à l\u2019officine' : ', délivrance seule') + '</span><span>' + esc(o.nom || '') + '</span></div></section>';
   }
   function yn(v) { return v === true ? 'Oui' : v === false ? 'Non' : '—'; }
   function docFiche() {
@@ -1934,21 +2093,21 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       '<h2>Facteurs de risque et situations</h2><p class="small">' + (rk.length ? esc(rk.join(' ; ')) : 'Aucun signalé.') + '</p>' +
       '<p class="small">Source des antécédents vaccinaux : ' + esc(S.input.patient.source || 'non précisée') + '. Médecin traitant : ' + esc(S.input.patient.medecin || '—') + ' — consentement à la transmission : ' + yn(S.input.patient.consentMT) + '.</p>' +
       '<h2>Analyse et décision</h2><table class="dt"><tr><th class="c">Vaccin</th><th class="c">Conclusion</th><th class="c">Motif</th></tr>' +
-      items.map(it => '<tr><td>' + esc(it.label) + '</td><td>' + STATUTS[it.status].label + (L.some(l => l.it.groupe === it.groupe) ? ' — <b>prescrit</b>' : '') + '</td><td class="small">' + esc(it.raisons.join(' ')) + '</td></tr>').join('') + '</table>' +
+      items.map(it => { const l = L.find(x => x.it.groupe === it.groupe); return '<tr><td>' + esc(it.label) + '</td><td>' + STATUTS[it.status].label + (l ? ' — <b>prescrit' + (l.mode === 'deliv' ? ' (délivrance seule)' : ' (délivrance + injection)') + '</b>' : '') + '</td><td class="small">' + esc(it.raisons.join(' ')) + '</td></tr>'; }).join('') + '</table>' +
       L.filter(l => l.derog).map(l => '<div class="box small"><b>Prescription par dérogation — ' + esc(l.it.label) + ' :</b> ' + esc(l.derog) + '</div>').join('') +
       '<div class="sign"><div>Pharmacien : ' + (ph ? esc(ph.prenom + ' ' + ph.nom) : '') + '<br>Signature</div></div>' +
       '<div class="dfoot"><span>Fiche d’entretien — copie officine</span><span>Outil d’aide à la prescription vaccinale v' + window.VP.version + '</span></div></section>';
   }
   function admPharm() { const id = S.adm.__vaccinateur || $('#hdr-pharm').value; return SET.pharmaciens.find(p => p.id === id) || currentPharmacien(); }
   function docAttestation() {
-    const ph = admPharm(); const o = SET.officine; const p = S.input.patient; const L = lines();
+    const ph = admPharm(); const o = SET.officine; const p = S.input.patient; const L = injLines();
     const t = S.trace;
     const rows = '<table class="dt"><tr><th class="c">Vaccin administré</th><th class="c">Dose</th><th class="c">N° de lot</th><th class="c">Péremption</th><th class="c">Voie et site</th></tr>' +
       L.map(l => { const a = S.adm[l.it.groupe] || {};
         const nx = l.it.prochaine && ((l.it.totalDoses && l.it.doseRang < l.it.totalDoses) || l.it.groupe === 'dtcap') ? '<br><span class="small"><b>' + (l.it.groupe === 'dtcap' ? 'Prochain rappel' : 'Dose suivante à partir du') + ' ' + D.fr(l.it.prochaine) + '</b></span>' : '';
         return '<tr><td><b>' + esc(l.p.nom) + '</b><br><span class="small">' + esc(l.it.maladies) + '</span>' + nx + '</td><td>' + esc(l.dose || '—') + '</td><td><b>' + esc(a.lot || '') + '</b></td><td>' + esc(fmtExp(a.peremption)) + '</td><td>' + ((a.voie || l.voie) === 'SC' ? 'SC' : 'IM') + ' — ' + esc(a.site || '') + '</td></tr>'; }).join('') + '</table>';
     const d0 = (S.adm.__date || TODAY), h0 = S.adm.__heure || '';
-    return '<section class="doc">' + enTete(ph) + '<h1>ATTESTATION DE VACCINATION</h1><p class="sub1">Exemplaire à conserver par le patient</p>' +
+    return '<section class="doc">' + enTete(ph) + '<h1>ATTESTATION DE VACCINATION</h1><p class="sub1">À conserver par le patient</p>' +
       '<p><b>' + esc((p.nom || '').toUpperCase()) + ' ' + esc(p.prenom || '') + '</b>, né(e) le ' + esc(D.fr(p.ddn)) + ',<br>a été vacciné(e) le <b>' + D.fr(d0) + '</b>' + (h0 ? ' à ' + esc(h0) : '') +
       ' par <b>' + (ph ? esc(ph.prenom + ' ' + (ph.nom || '').toUpperCase()) : '') + '</b>, pharmacien' + (ph && ph.rpps ? ' (RPPS ' + esc(ph.rpps) + ')' : '') + ', exerçant à la ' + esc(o.nom || 'pharmacie') + ', ' + esc(o.adresse) + ', ' + esc(o.cp) + ' ' + esc(o.ville) + '.</p>' +
       rows +
@@ -1957,7 +2116,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       '<p class="small">Vaccination réalisée par un pharmacien d’officine en application du décret n° 2023-736 du 8 août 2023 relatif aux compétences vaccinales des pharmaciens d’officine. Entretien pré-vaccinal réalisé, absence de contre-indication retenue. Conservez ce document et présentez-le lors de vos prochaines vaccinations.</p>' +
       '<p class="lieu">Fait à ' + esc(o.ville || '') + ', le ' + D.fr(d0) + '</p>' +
       '<div class="sign"><div>Signature du pharmacien vaccinateur et tampon de la pharmacie</div></div>' +
-      '<div class="dfoot"><span>Attestation de vaccination — exemplaire patient</span><span>' + esc(o.nom || '') + ' — Tél. ' + esc(tel33(o.tel)) + '</span></div></section>';
+      '<div class="dfoot"><span>Attestation de vaccination</span><span>' + esc(o.nom || '') + ' — Tél. ' + esc(tel33(o.tel)) + '</span></div></section>';
   }
   /* aperçus A4 mis à l'échelle de la largeur disponible */
   function fitDocs() {
@@ -1983,32 +2142,37 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
   /* --------------------------------------------- administration */
   const SITES = ['Deltoïde gauche', 'Deltoïde droit', 'Face postérieure du bras gauche (SC)', 'Face postérieure du bras droit (SC)', 'Cuisse gauche (antérolatérale)', 'Cuisse droite (antérolatérale)'];
   function renderAdm() {
-    const L = lines();
+    const L = lines(); const LI = L.filter(l => l.mode === 'inj');
+    $('#adm-trace').hidden = !LI.length; $('#att-preview').hidden = !LI.length;
     if (!L.length) { $('#adm-list').innerHTML = '<p class="lead">Aucun vaccin prescrit.</p>'; $('#att-preview').innerHTML = ''; $('#fact').innerHTML = ''; return; }
     if (!S.adm.__date) S.adm.__date = TODAY;
     if (!S.adm.__heure) { const n = new Date(); S.adm.__heure = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'); }
     let i = 0;
-    $('#adm-list').innerHTML = '<div class="grid" style="margin-bottom:10px"><div class="f"><label class="req">Date de l’injection</label><input type="date" data-adm="__date" value="' + esc(S.adm.__date) + '"></div>' +
+    $('#adm-list').innerHTML = (LI.length ? '' : '<div class="msg info" style="margin-bottom:10px">Délivrance seule : aucun acte de vaccination à l\u2019officine, pas d\u2019attestation à établir. Le lot et la péremption peuvent être scannés pour information.</div>') +
+      '<div class="grid" style="margin-bottom:10px"' + (LI.length ? '' : ' hidden') + '><div class="f"><label class="req">Date de l\u2019injection</label><input type="date" data-adm="__date" value="' + esc(S.adm.__date) + '"></div>' +
       '<div class="f"><label>Heure</label><input type="time" data-adm="__heure" value="' + esc(S.adm.__heure) + '"></div>' +
       '<div class="f"><label class="req">Pharmacien vaccinateur</label><select data-adm="__vaccinateur">' + SET.pharmaciens.map(p => '<option value="' + p.id + '"' + ((S.adm.__vaccinateur || $('#hdr-pharm').value) === p.id ? ' selected' : '') + '>' + esc(p.prenom + ' ' + p.nom) + '</option>').join('') + '</select></div></div>' +
       L.map(l => {
         const g = l.it.groupe; const a = S.adm[g] || (S.adm[g] = { voie: l.voie, site: '' });
-        if (!a.site) a.site = (a.voie === 'SC' ? SITES[2] : SITES[i % 2]); i++;
-        const expired = isExpired(a.peremption);
-        return '<div class="adm"><h4>' + esc(l.p.nom) + ' <span class="badge">' + esc(l.it.label) + '</span> <span class="badge">' + esc(l.dose) + '</span></h4><div class="grid">' +
-          '<div class="f"><label class="req">N° de lot</label><input data-adm="' + g + '.lot" value="' + esc(a.lot || '') + '" autocomplete="off" style="text-transform:uppercase"></div>' +
-          '<div class="f"><label class="req">Péremption</label><input data-adm="' + g + '.peremption" value="' + esc(a.perRaw != null ? a.perRaw : fmtExp(a.peremption)) + '" placeholder="MM/AAAA" inputmode="numeric" maxlength="7" autocomplete="off"><span class="err" id="exp-' + g + '">' + expMsg(a) + '</span></div>' +
-          '<div class="f"><label class="req">Voie</label><select data-adm="' + g + '.voie">' + l.p.voies.map(v => '<option' + (v === a.voie ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
-          '<div class="f"><label class="req">Site d’injection</label><select data-adm="' + g + '.site">' + SITES.map(s => '<option' + (s === a.site ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></div>' +
-          '</div>' + (S.input.entretien.anticoag && a.voie === 'IM' ? '<p class="err" style="margin:6px 0 0">Sous anticoagulant : aiguille fine, deltoïde, compression prolongée.</p>' : '') + '</div>';
+        const inj = l.mode === 'inj';
+        if (inj && !a.site) { a.site = (a.voie === 'SC' ? SITES[2] : SITES[i % 2]); i++; }
+        const scanTxt = a.scan ? '<span class="badge scan-ok">✓ scanné — CIP ' + esc(a.cip) + (a.serie ? ' · série ' + esc(a.serie) : '') + '</span>' : '';
+        return '<div class="adm' + (inj ? '' : ' deliv') + '" id="adm-' + g + '"><h4>' + esc(l.p.nom) + ' <span class="badge">' + esc(l.it.label) + '</span> <span class="badge">' + esc(l.dose) + '</span> <span class="badge">' + (inj ? 'Délivrance + injection' : 'Délivrance seule') + '</span> ' + scanTxt + '</h4><div class="grid">' +
+          '<div class="f"><label' + (inj ? ' class="req"' : '') + '>N° de lot</label><input data-adm="' + g + '.lot" value="' + esc(a.lot || '') + '" autocomplete="off" style="text-transform:uppercase"></div>' +
+          '<div class="f"><label' + (inj ? ' class="req"' : '') + '>Péremption</label><input data-adm="' + g + '.peremption" value="' + esc(a.perRaw != null ? a.perRaw : fmtExp(a.peremption)) + '" placeholder="MM/AAAA" inputmode="numeric" maxlength="7" autocomplete="off"><span class="err" id="exp-' + g + '">' + expMsg(a) + '</span></div>' +
+          (inj ? '<div class="f"><label class="req">Voie</label><select data-adm="' + g + '.voie">' + l.p.voies.map(v => '<option' + (v === a.voie ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
+          '<div class="f"><label class="req">Site d\u2019injection</label><select data-adm="' + g + '.site">' + SITES.map(s => '<option' + (s === a.site ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></div>' : '') +
+          '</div>' + (inj && S.input.entretien.anticoag && a.voie === 'IM' ? '<p class="err" style="margin:6px 0 0">Sous anticoagulant : aiguille fine, deltoïde, compression prolongée.</p>' : '') +
+          (inj ? '' : '<p class="hint" style="margin:6px 0 0;color:var(--ink-3);font-size:13px">Conseils au patient : conserver au réfrigérateur (+2 °C à +8 °C), ne pas congeler, injection à réaliser rapidement par un professionnel habilité ; rapporter l\u2019ordonnance.</p>') + '</div>';
       }).join('');
     $$('[data-a]').forEach(el => { el.checked = !!S.trace[el.dataset.a]; });
     $('#btn-journal').hidden = !SET.journal.actif;
     renderFact(); renderAtt();
   }
   function admChecks() {
-    const L = lines(); const errs = [];
-    if (!S.adm.__date) errs.push('date de l’injection');
+    const L = injLines(); const errs = [];
+    if (!L.length) return errs;
+    if (!S.adm.__date) errs.push('date de l\u2019injection');
     for (const l of L) {
       const a = S.adm[l.it.groupe] || {};
       if (!a.lot) errs.push('n° de lot (' + l.p.nom + ')');
@@ -2038,6 +2202,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     return isExpired(a.peremption) ? 'Vaccin périmé : ne pas administrer.' : '';
   }
   function renderAtt() {
+    if (!injLines().length) { $('#adm-msg').innerHTML = ''; $('#att-preview').innerHTML = ''; return; }
     const errs = admChecks();
     $('#adm-msg').innerHTML = errs.length ? '<div class="msg alerte">À compléter avant impression : ' + esc(errs.join(', ')) + '.</div>' : '<div class="msg ok">Acte complet : l’attestation peut être imprimée.</div>';
     $('#btn-print-att').disabled = !!errs.length;
@@ -2049,13 +2214,14 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     const rows = L.map(l => {
       const code = l.it.honoraire || 'RVA';
       const mt = code === 'VGP' ? H.vgp : code === 'INJ' ? H.inj : H.rvaPharmacien;
-      return '<tr><td>' + esc(l.p.nom) + '</td><td>Code CIP du vaccin + acte <b>' + code + '</b> (' + Number(mt).toFixed(2).replace('.', ',') + ' € TTC)</td><td class="small">' + esc(l.it.priseEnCharge || '') + (l.it.codePrescripteur ? ' — indiquer le code prescripteur pharmacien ' + esc(H.codePrescripteur) + ' et s’identifier comme exécutant.' : ' — s’identifier comme prescripteur et exécutant.') + '</td></tr>';
+      const fac = l.mode === 'inj' ? 'Code CIP du vaccin + acte <b>' + code + '</b> (' + Number(mt).toFixed(2).replace('.', ',') + ' € TTC)' : 'Code CIP du vaccin seul (délivrance) — <b>pas d\u2019honoraire de vaccination</b>';
+      return '<tr><td>' + esc(l.p.nom) + '</td><td>' + fac + '</td><td class="small">' + esc(l.it.priseEnCharge || '') + (l.it.codePrescripteur ? ' — indiquer le code prescripteur pharmacien ' + esc(H.codePrescripteur) + ' et s’identifier comme exécutant.' : ' — s’identifier comme prescripteur et exécutant.') + '</td></tr>';
     }).join('');
     $('#fact').innerHTML = '<table class="t"><thead><tr><th>Vaccin</th><th>Facturation</th><th>Prise en charge</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<p class="hint" style="color:var(--ink-3);font-size:13px">Sans prescription préalable, le bon de prise en charge Assurance Maladie dûment complété vaut prescription et sert de support à la facturation. L’acte n’est pris en charge que si le vaccin l’est (calendrier vaccinal). DROM : coefficient ' + esc(H.coefDrom) + '. Montants paramétrables.</p>';
   }
   function mssText() {
-    const ph = admPharm(); const o = SET.officine; const p = S.input.patient; const L = lines();
+    const ph = admPharm(); const o = SET.officine; const p = S.input.patient; const L = injLines();
     return 'Objet : Vaccination réalisée en officine — ' + (p.nom || '').toUpperCase() + ' ' + (p.prenom || '') + ' (né(e) le ' + D.fr(p.ddn) + ')\n\n' +
       'Cher Confrère, chère Consœur,\n\nJe vous informe que votre patient(e) ' + (p.prenom || '') + ' ' + (p.nom || '').toUpperCase() + ', né(e) le ' + D.fr(p.ddn) + ', a été vacciné(e) le ' + D.fr(S.adm.__date || TODAY) + ' à la ' + (o.nom || 'pharmacie') + ' :\n' +
       L.map(l => { const a = S.adm[l.it.groupe] || {}; return '- ' + l.p.nom + ' (' + l.it.label + ') — ' + (l.dose || '') + ' — lot ' + (a.lot || '…') + ', péremption ' + (fmtExp(a.peremption) || '…') + ', voie ' + (a.voie || l.voie) + ', ' + (a.site || '') +
@@ -2090,11 +2256,103 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     $('#btn-journal').addEventListener('click', () => {
       const errs = admChecks(); if (errs.length) { toast('Compléter l’acte avant l’enregistrement'); return; }
       const jr = journal(); const p = S.input.patient; const ph = admPharm();
-      lines().forEach(l => { const a = S.adm[l.it.groupe] || {}; jr.push({ date: S.adm.__date, heure: S.adm.__heure, nom: (p.nom || '').toUpperCase(), prenom: p.prenom, ddn: p.ddn, vaccin: l.p.nom, valence: l.it.label, dose: l.dose, lot: a.lot, peremption: a.peremption, voie: a.voie || l.voie, site: a.site, pharmacien: ph ? ph.prenom + ' ' + ph.nom : '' }); });
+      injLines().forEach(l => { const a = S.adm[l.it.groupe] || {}; jr.push({ date: S.adm.__date, heure: S.adm.__heure, nom: (p.nom || '').toUpperCase(), prenom: p.prenom, ddn: p.ddn, vaccin: l.p.nom, valence: l.it.label, dose: l.dose, lot: a.lot, peremption: a.peremption, voie: a.voie || l.voie, site: a.site, pharmacien: ph ? ph.prenom + ' ' + ph.nom : '' }); });
       try { localStorage.setItem(LS_JR, JSON.stringify(jr)); toast('Acte enregistré au registre local'); } catch (e) { toast('Registre : enregistrement impossible'); }
     });
   }
   function journal() { try { return JSON.parse(localStorage.getItem(LS_JR) || '[]'); } catch (e) { return []; } }
+
+  /* --------------------------------------------- scan Datamatrix */
+  function catalogueProduit(id) { return Object.assign({}, PRODUITS.find(p => p.id === id) || {}, (SET.catalogue || {})[id] || {}); }
+  function produitParCip(cip) { return PRODUITS.map(p => catalogueProduit(p.id)).find(p => (p.cips || []).includes(cip)) || null; }
+  function apprendreCip(pid, cip) {
+    SET.catalogue = SET.catalogue || {}; const o = SET.catalogue[pid] || (SET.catalogue[pid] = {});
+    o.cips = Array.from(new Set([...(o.cips || []), cip])); saveSettings();
+  }
+  function remplirDepuisScan(l, r) {
+    const g = l.it.groupe; const a = S.adm[g] || (S.adm[g] = { voie: l.voie, site: '' });
+    a.lot = (r.lot || '').toUpperCase(); a.peremption = r.peremption || ''; a.perRaw = null; a.cip = r.cip13; a.serie = r.serie; a.scan = true;
+    renderAdm();
+    const card = $('#adm-' + g); if (card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const per = isExpired(a.peremption);
+    $('#scan-msg').innerHTML = '<div class="msg ' + (per ? 'bloquant' : 'ok') + '" style="margin-top:8px">' + esc(l.p.nom) + ' — lot <b>' + esc(a.lot || '?') + '</b>, péremption <b>' + esc(fmtExp(a.peremption) || '?') + '</b>' + (per ? ' — <b>VACCIN PÉRIMÉ : ne pas délivrer ni administrer.</b>' : '') + '</div>';
+    toast(per ? 'Vaccin périmé !' : 'Boîte scannée : ' + l.p.nom);
+  }
+  function traiterScan(raw) {
+    const box = $('#scan-msg');
+    const r = window.GS1.parse(raw);
+    if (!r.ok) { box.innerHTML = '<div class="msg bloquant" style="margin-top:8px">' + esc(r.erreur) + '</div>'; return; }
+    const L = lines();
+    if (!L.length) { box.innerHTML = '<div class="msg alerte" style="margin-top:8px">Aucun vaccin prescrit.</div>'; return; }
+    const connu = produitParCip(r.cip13);
+    if (connu) {
+      const l = L.find(x => x.p.id === connu.id);
+      if (l) return remplirDepuisScan(l, r);
+      const autre = L.find(x => x.it.groupe === connu.groupe);
+      if (autre) {
+        const ok = autre.it.produits.some(p => p.id === connu.id);
+        box.innerHTML = '<div class="msg bloquant" style="margin-top:8px">Boîte scannée : <b>' + esc(connu.nom) + '</b> — la spécialité prescrite est <b>' + esc(autre.p.nom) + '</b>.' +
+          (ok ? ' <button class="btn sm" type="button" id="scan-swap">Remplacer sur l\u2019ordonnance (à réimprimer)</button>' : ' Cette spécialité n\u2019est pas adaptée à ce patient.') + '</div>';
+        if (ok) $('#scan-swap').addEventListener('click', () => { S.sel[autre.it.groupe].produit = connu.id; S.sel[autre.it.groupe].touched = true; compute(); const l2 = lines().find(x => x.p.id === connu.id); toast('Spécialité remplacée : réimprimez l\u2019ordonnance'); if (l2) remplirDepuisScan(l2, r); });
+        return;
+      }
+      box.innerHTML = '<div class="msg bloquant" style="margin-top:8px">Boîte scannée : <b>' + esc(connu.nom) + '</b> — ce vaccin n\u2019est pas sur l\u2019ordonnance.</div>';
+      return;
+    }
+    // CIP inconnu : associer à une spécialité prescrite (mémorisé dans les paramètres)
+    const libres = L.filter(l => !(S.adm[l.it.groupe] || {}).scan);
+    const cand = libres.length ? libres : L;
+    box.innerHTML = '<div class="msg info" style="margin-top:8px">CIP <b>' + esc(r.cip13) + '</b> pas encore connu. Lot ' + esc(r.lot || '?') + ', péremption ' + esc(fmtExp(r.peremption) || '?') + '. Ce code correspond à :<div class="row" style="margin-top:8px">' +
+      cand.map((l, i) => '<button class="btn sm" type="button" data-assoc="' + i + '">' + esc(l.p.nom) + '</button>').join('') + '</div><span class="small">Le code sera mémorisé pour les prochains scans (exporté avec les paramètres).</span></div>';
+    $$('[data-assoc]', box).forEach(b => b.addEventListener('click', () => { const l = cand[+b.dataset.assoc]; apprendreCip(l.p.id, r.cip13); remplirDepuisScan(l, r); }));
+  }
+  let camStream = null, camTimer = null;
+  async function ouvrirCamera() {
+    const v = $('#cam-video'), msg = $('#cam-msg');
+    $('#dlg-cam').showModal();
+    try {
+      const det = new window.BarcodeDetector({ formats: ['data_matrix'] });
+      camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
+      v.srcObject = camStream; await v.play();
+      msg.textContent = 'Placez le Datamatrix de la boîte dans le cadre.';
+      const tick = async () => {
+        if (!camStream) return;
+        try { const res = await det.detect(v); if (res && res.length) { const raw = res[0].rawValue; fermerCamera(); if (navigator.vibrate) navigator.vibrate(60); traiterScan(raw); return; } } catch (e) { /* image suivante */ }
+        camTimer = setTimeout(tick, 180);
+      };
+      tick();
+    } catch (e) { msg.textContent = 'Caméra indisponible : ' + (e && e.message ? e.message : e) + '. Autorisez l\u2019accès à la caméra (HTTPS requis) ou utilisez la douchette.'; }
+  }
+  function fermerCamera() {
+    clearTimeout(camTimer); camTimer = null;
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+    const v = $('#cam-video'); if (v) v.srcObject = null;
+    if ($('#dlg-cam').open) $('#dlg-cam').close();
+  }
+  function bindScan() {
+    const inp = $('#scan-in');
+    const go = () => { const v = inp.value; inp.value = ''; if (v.trim()) traiterScan(v); };
+    inp.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter' || (ev.key === 'Tab' && inp.value.length > 15)) { ev.preventDefault(); go(); }
+      // FNC1 transmis par certaines douchettes comme Ctrl+] (GS) : on le conserve
+      if (ev.ctrlKey && (ev.key === ']' || ev.code === 'BracketRight')) { ev.preventDefault(); inp.value += window.GS1.GS; }
+    });
+    $('#scan-go').addEventListener('click', go);
+    if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      window.BarcodeDetector.getSupportedFormats().then(f => { if (f.includes('data_matrix')) $('#scan-cam').hidden = false; }).catch(() => {});
+    }
+    $('#scan-cam').addEventListener('click', ouvrirCamera);
+    $('#cam-close').addEventListener('click', fermerCamera);
+    $('#dlg-cam').addEventListener('cancel', fermerCamera);
+    // douchette sans champ actif : les caractères sont redirigés vers le champ de scan
+    document.addEventListener('keydown', ev => {
+      if (S.step !== 6 || ev.ctrlKey || ev.metaKey || ev.altKey || ev.key.length !== 1) return;
+      const a = document.activeElement;
+      if (a && (/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) || a.isContentEditable)) return;
+      if (document.querySelector('dialog[open]')) return;
+      ev.preventDefault(); inp.focus(); inp.value += ev.key;
+    });
+  }
 
   /* --------------------------------------------- navigation */
   function go(n) {
@@ -2104,7 +2362,8 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     if (n === 2) markMissing(false);
     if (n === 4) { compute(); renderReco(); }
     if (n === 5) { compute(); renderOrdo(); }
-    if (n === 6) { compute(); renderAdm(); }
+    if (n === 6) { compute(); renderAdm(); $('#scan-msg').innerHTML = ''; if (matchMedia('(pointer:fine)').matches) setTimeout(() => $('#scan-in').focus(), 50); }
+    else fermerCamera();
     window.scrollTo({ top: 0, behavior: 'auto' });
     const cur = $('.step[aria-current="step"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
@@ -2151,7 +2410,8 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       return '<tr><td><input type="checkbox" data-cat="' + p.id + '.actif"' + (p.actif !== false ? ' checked' : '') + '></td>' +
         '<td><input class="inp" data-cat="' + p.id + '.nom" value="' + esc(p.nom) + '"></td><td>' + esc(GROUPES[p.groupe] ? GROUPES[p.groupe].court : p.groupe === 'hepab' ? 'Hépatites A+B' : p.groupe) + '</td>' +
         '<td>' + (p.ageMin != null ? (p.ageMin < 1 ? Math.round(p.ageMin * 12) + ' mois' : p.ageMin + ' ans') : '') + (p.ageMax != null ? ' – ' + p.ageMax + ' ans' : ' et +') + '</td><td>' + p.voies.join(', ') + '</td>' +
-        '<td>' + Object.keys(ALLERGENES).map(a => '<label class="chk" style="padding:0;font-size:12.5px"><input type="checkbox" data-cat="' + p.id + '.al.' + a + '"' + ((p.allergenes || []).includes(a) ? ' checked' : '') + '> ' + a + '</label>').join('') + '</td></tr>'; }).join('');
+        '<td>' + Object.keys(ALLERGENES).map(a => '<label class="chk" style="padding:0;font-size:12.5px"><input type="checkbox" data-cat="' + p.id + '.al.' + a + '"' + ((p.allergenes || []).includes(a) ? ' checked' : '') + '> ' + a + '</label>').join('') + '</td>' +
+        '<td><input class="inp" data-cat="' + p.id + '.cips" value="' + esc((p.cips || []).join(', ')) + '" placeholder="appris au 1er scan" style="min-width:150px"></td></tr>'; }).join('');
     $('#cfg-src').textContent = 'paramètres ' + CFG_SOURCE + ' — révision ' + (SET.revision || 0);
     $('#jr-count').textContent = journal().length + ' acte(s)';
   }
@@ -2184,6 +2444,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
         SET.catalogue = SET.catalogue || {}; const o = SET.catalogue[id] || (SET.catalogue[id] = {});
         if (k === 'actif') o.actif = el.checked;
         else if (k === 'nom') o.nom = el.value.trim() || PRODUITS.find(p => p.id === id).nom;
+        else if (k === 'cips') o.cips = el.value.split(/[\s,;]+/).map(x => x.replace(/\D/g, '')).filter(x => x.length === 13);
         else if (k === 'al') { const base = (o.allergenes || PRODUITS.find(p => p.id === id).allergenes).slice(); const ix = base.indexOf(a); if (el.checked && ix < 0) base.push(a); if (!el.checked && ix >= 0) base.splice(ix, 1); o.allergenes = base; }
         saveSettings();
       }
@@ -2233,7 +2494,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
 
   /* --------------------------------------------- démarrage */
   function init() {
-    buildForms(); bindInputs(); bindReco(); bindAdm(); bindAdmin();
+    buildForms(); bindInputs(); bindReco(); bindAdm(); bindAdmin(); bindScan();
     $$('[data-go]').forEach(b => b.addEventListener('click', () => {
       if (+b.dataset.go === 3 && S.step === 2 && missingEntretien().length) { markMissing(true); toast('Entretien incomplet : questions signalées en rouge'); }
       go(b.dataset.go);
@@ -2243,7 +2504,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     $('#btn-new2').addEventListener('click', () => { if (confirm('Terminer et effacer la saisie de ce patient ?')) newPatient(); });
     $('#hdr-pharm').addEventListener('change', () => { try { localStorage.setItem(LS_PH, $('#hdr-pharm').value); } catch (e) {} refresh(); });
     $('#confirm-entretien').addEventListener('change', renderOrdo);
-    $('#btn-print-ordo').addEventListener('click', () => { if (checksOrdo().every(x => x[0])) printDocs(docOrdonnance(false) + ($('#opt-copie').checked ? docOrdonnance(true) : '')); });
+    $('#btn-print-ordo').addEventListener('click', () => { if (checksOrdo().every(x => x[0])) printDocs(docOrdonnance()); });
     $('#btn-print-fiche').addEventListener('click', () => printDocs(docFiche()));
     $('#ver').textContent = 'Version ' + window.VP.version + (qsDate ? ' — date simulée : ' + D.fr(TODAY) : '') + '.';
     renderHeader(); writeControls(); onInputChange(); go(1);

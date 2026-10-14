@@ -8,8 +8,15 @@ Application web autonome (un seul `index.html`, JavaScript natif, sans dépendan
 2. **Entretien pré-vaccinal** — reprise de la fiche de recueil : immunosuppresseurs, corticothérapie > 10 mg/j > 14 j, anticoagulants, immunodépression, grossesse (terme en SA), projet de grossesse, allaitement, anaphylaxie vaccinale, allergies (œuf, gélatine, aminosides, PEG, polysorbate 80, levure), fièvre, infection aiguë, Guillain-Barré post-vaccinal, vaccin vivant < 4 semaines, contexte de voyage. Toutes les questions doivent être renseignées.
 3. **Profil & antécédents** — facteurs de risque (pathologies, immunité, entourage, mode de vie, profession) et antécédents par valence.
 4. **Recommandations** — pour chaque valence : recommandé / peut être proposé / à différer / orienter / contre-indiqué / schéma en cours / à jour, avec motif, schéma, prochaine échéance, prise en charge et référence. Choix de la spécialité (filtrée par âge AMM et allergènes), de la voie (SC proposée sous anticoagulant si le RCP l'autorise) et du rang de dose. Dérogation possible pour un vaccin « à jour / en cours / non indiqué » avec justification écrite, reportée sur la fiche d'entretien.
-5. **Ordonnance** — vérifications bloquantes (officine, pharmacien formé et déclaré à l'Ordre, RPPS à 11 chiffres, identité, entretien complet, attestation d'entretien et de consentement) puis impression de l'original et d'une copie officine, et de la fiche d'entretien.
-6. **Administration & traçabilité** — lot, péremption (blocage si périmé), voie, site, date/heure, vaccinateur ; cases DMP / carnet / ordonnancier / médecin traitant ; attestation de vaccination ; message prêt à envoyer par MSSanté ; rappel de facturation (RVA / VGP / INJ, code prescripteur pharmacien pour Abrysvo).
+   Pour chaque vaccin, l'acte se choisit : **Délivrance + injection** à l'officine, ou **Délivrance seule** (injection par un autre professionnel habilité). Les deux peuvent coexister sur la même ordonnance.
+5. **Ordonnance** — vérifications bloquantes (officine, pharmacien formé et déclaré à l'Ordre, RPPS à 11 chiffres, identité, entretien complet, attestation d'entretien et de consentement) puis impression de l'ordonnance (un seul exemplaire, numérisé ensuite dans le dossier patient) et de la fiche d'entretien. Chaque ligne précise « + Acte d'injection par le pharmacien » ou « Délivrance seule » avec les conseils de conservation.
+6. **Délivrance & vaccination** — **scan du Datamatrix** de la boîte (douchette ou caméra) : produit, lot et péremption remplis automatiquement, blocage si périmé, alerte si la boîte ne correspond pas à la spécialité prescrite. Pour les vaccins injectés : voie, site, date/heure, vaccinateur, cases DMP / carnet / ordonnancier / médecin traitant, attestation, message MSSanté. Rappel de facturation (CIP seul pour une délivrance ; CIP + RVA / VGP / INJ pour une injection ; code prescripteur pharmacien pour Abrysvo).
+
+## Scan du Datamatrix
+
+- **Douchette** (USB / Bluetooth en émulation clavier) : à l'étape 6, scanner directement — le champ de scan reçoit le code même s'il n'a pas le focus. Formats acceptés : chaîne GS1 brute avec ou sans séparateur FNC1, format avec parenthèses, préfixe `]d2`, et douchette restée en QWERTY sur un poste AZERTY. Conseil : activer la transmission du FNC1/GS dans la configuration de la douchette pour une lecture sans ambiguïté.
+- **Caméra** (smartphone / tablette) : bouton « Caméra », disponible sur les navigateurs qui prennent en charge la détection native des codes Datamatrix (Chrome / Edge sur Android et Windows/macOS récents). Non disponible sous Firefox et Safari iOS : utiliser la douchette ou la saisie. Nécessite HTTPS.
+- **CIP appris** : aucune base de CIP n'est embarquée. Au premier scan d'une référence, l'outil demande à quelle spécialité prescrite elle correspond et mémorise le CIP13 dans le catalogue (exporté avec `config.json`, modifiable dans Paramètres → Catalogue).
 
 ## Conformité de l'ordonnance
 
@@ -57,6 +64,7 @@ Déposez le `config.json` exporté depuis Paramètres dans `/var/www/vaccins/` :
 
 ```bash
 node tests/engine.test.js     # 79 cas cliniques sur le moteur
+node tests/gs1.test.js        # lecture des Datamatrix GS1
 python3 tests/ui.test.py      # parcours complet dans Chromium (Playwright), captures dans tests/out/
 ```
 
