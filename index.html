@@ -2,7 +2,11 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
 <title>Prescription vaccinale</title>
 <meta name="description" content="Aide à la prescription vaccinale par le pharmacien d'officine et génération de l'ordonnance — calendrier des vaccinations 2026">
 <meta name="theme-color" content="#0f6b55">
@@ -18,7 +22,11 @@
   --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--font)}
+body{overflow-x:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+button,input,select,textarea,label,summary,.step{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+img{max-width:100%}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--accent)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -33,6 +41,7 @@ a{color:var(--accent)}
 .top select option{color:#111}
 .tbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:var(--r-sm);padding:6px 11px;cursor:pointer;white-space:nowrap}
 .tbtn:hover{background:rgba(255,255,255,.22)}
+.l-short{display:none}
 
 /* ---------- étapes */
 .steps{max-width:1180px;margin:14px auto 0;padding:0 16px;display:flex;gap:6px;overflow-x:auto}
@@ -51,8 +60,8 @@ main{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
 .card h2 .tag{font-size:12px;font-weight:500;color:var(--ink-3)}
 .card h3{font-size:14px;margin:14px 0 8px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.4px}
 .lead{color:var(--ink-2);margin:0 0 12px}
-.grid{display:grid;gap:12px 16px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
-.grid.g2{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.grid{display:grid;gap:12px 16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr))}
+.grid.g2{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}
 .f{display:flex;flex-direction:column;gap:4px;min-width:0}
 .f>label,.lab{font-size:13px;color:var(--ink-2);font-weight:550}
 .req::after{content:" *";color:var(--danger)}
@@ -62,7 +71,7 @@ main{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
 .f.inline{flex-direction:row;align-items:center;gap:8px}
 .chk{display:flex;gap:8px;align-items:flex-start;padding:5px 0;cursor:pointer;line-height:1.3}
 .chk input{margin-top:2px;flex:none;width:16px;height:16px;accent-color:var(--accent)}
-.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 18px}
+.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:0 18px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
 
@@ -125,14 +134,17 @@ main{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
 .toggle{display:flex;align-items:center;gap:8px;font-weight:650;cursor:pointer;padding-bottom:6px}
 .toggle input{width:18px;height:18px;accent-color:var(--accent)}
 .group-title{font-size:13px;font-weight:650;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 8px}
-.folded{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.folded{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:8px}
 .mini{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;font-size:13.5px}
 .mini b{display:block;font-size:14px}
 .mini .chip{float:right;margin-left:6px}
 .mini p{margin:4px 0 0;color:var(--ink-2)}
 
 /* aperçu des documents */
-.preview{background:#e9edeb;border-radius:var(--r);padding:18px;overflow:auto}
+.preview{background:#e9edeb;border-radius:var(--r);padding:18px;overflow:hidden}
+.docfit{margin:0 auto 18px;overflow:hidden}
+.docfit>.doc{transform-origin:top left;margin:0!important}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .preview .doc{margin:0 auto 18px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
 .checklist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .checklist li{display:flex;gap:8px;align-items:flex-start}
@@ -166,10 +178,71 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
 .toast.on{opacity:1}
 .foot{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--ink-3);font-size:12.5px}
 
+/* ---------- tablette */
+@media (max-width:1000px){
+  .rc .presc{grid-template-columns:1fr 1fr}
+  .rc .presc .toggle{grid-column:1/-1}
+}
+/* ---------- écrans tactiles : cibles ≥ 44 px, police 16 px (pas de zoom automatique à la saisie) */
+@media (pointer:coarse), (max-width:760px){
+  input,select,textarea,.f input,.f select,.f textarea,.inp,.top select{font-size:16px!important}
+  .f input,.f select,.inp,.top select{min-height:44px}
+  .f input[type=checkbox],.f input[type=radio]{min-height:0}
+  .btn,.tbtn{min-height:44px}
+  .btn.sm{min-height:38px}
+  .yn button{padding:10px 18px;min-width:64px;font-size:15px}
+  .chk{padding:9px 0}
+  .chk input,.toggle input{width:22px;height:22px}
+  .step{padding:9px 14px 9px 9px}
+  .tab{padding:12px 14px}
+}
+/* ---------- mobile */
 @media (max-width:760px){
-  .rc .presc{grid-template-columns:1fr}
+  html,body{font-size:15.5px}
+  .top{position:static}
+  .top-in{padding:10px 12px;gap:8px}
+  .brand{flex:1 1 0;min-width:0;order:0}
+  .brand{font-size:15px;gap:8px}
+  .brand>div{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand small{overflow:hidden;text-overflow:ellipsis}
+  .tbtn{order:1;padding:6px 12px}
+  .l-long{display:none}.l-short{display:inline}
+  #btn-admin .l-short{font-size:20px;line-height:1}
+  .top select{order:2;flex:1 1 100%;max-width:none;min-width:0}
+  .steps{position:sticky;top:0;z-index:15;margin:0;padding:8px 12px;background:var(--bg);box-shadow:0 1px 0 var(--line);scrollbar-width:none}
+  .steps::-webkit-scrollbar{display:none}
+  .step{flex:0 0 auto}
   .step .lbl{display:none}
-  .q{flex-wrap:wrap}
+  .step[aria-current="step"] .lbl{display:inline}
+  main{padding:12px 10px calc(96px + env(safe-area-inset-bottom))}
+  .card{padding:14px 12px;border-radius:9px}
+  .card h2{flex-wrap:wrap}
+  .rc{padding:12px 11px}
+  .rc .presc{grid-template-columns:1fr}
+  .rc .meta{flex-direction:column;gap:4px}
+  .q{gap:10px;align-items:flex-start}
+  .q .yn button{padding:10px 13px;min-width:54px}
+  .row{gap:8px}
+  .row .btn{flex:1 1 auto;justify-content:center}
+  .row .spacer{display:none}
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:16;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(244,246,245,.96);backdrop-filter:blur(6px);box-shadow:0 -1px 0 var(--line)}
+  .nav .btn{flex:1 1 0;justify-content:center;font-size:14.5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav .btn.pri{flex:1.6 1 0}
+  .nav>span{display:none}
+  .preview{padding:8px;border-radius:8px}
+  .docfit{margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .docfit>.doc{box-shadow:none}
+  .adm{padding:10px}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom));max-width:calc(100% - 24px);text-align:center;border-radius:14px}
+  .foot{padding:0 12px calc(90px + env(safe-area-inset-bottom))}
+  dialog{width:100%;max-width:none;height:100%;max-height:none;margin:0;border-radius:0}
+  dialog#dlg-pin{height:auto;margin:auto;width:calc(100% - 24px);border-radius:var(--r)}
+  .dlg-h{padding:12px;padding-top:calc(12px + env(safe-area-inset-top))}
+  .dlg-b{max-height:calc(100dvh - 64px - env(safe-area-inset-top));padding:12px}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .tab{flex:0 0 auto}
+  #ph-table{min-width:640px}
+  .kv{grid-template-columns:1fr}
 }
 
 /* ---------- documents imprimables */
@@ -230,8 +303,8 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     </div>
     <label class="sr" for="hdr-pharm">Pharmacien</label>
     <select id="hdr-pharm" title="Pharmacien prescripteur et vaccinateur"></select>
-    <button class="tbtn" id="btn-new" type="button" title="Effacer la saisie et commencer un nouveau patient">Nouveau patient</button>
-    <button class="tbtn" id="btn-admin" type="button">Paramètres</button>
+    <button class="tbtn" id="btn-new" type="button" title="Effacer la saisie et commencer un nouveau patient"><span class="l-long">Nouveau patient</span><span class="l-short">Nouveau</span></button>
+    <button class="tbtn" id="btn-admin" type="button" title="Paramètres" aria-label="Paramètres"><span class="l-long">Paramètres</span><span class="l-short" aria-hidden="true">⚙</span></button>
   </div>
 </header>
 
@@ -258,7 +331,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
           <label class="chk"><input type="radio" name="sexe" data-p="patient.sexe" value="M"> Masculin</label>
         </div></div>
       <div class="f"><label class="req" for="p-ddn">Date de naissance</label><input id="p-ddn" type="date" data-p="patient.ddn"><span class="hint" id="p-age"></span></div>
-      <div class="f"><label for="p-poids">Poids (kg)</label><input id="p-poids" type="number" min="1" max="300" data-p="patient.poids"><span class="hint">facultatif</span></div>
+      <div class="f"><label for="p-poids">Poids (kg)</label><input id="p-poids" type="number" inputmode="decimal" min="1" max="300" data-p="patient.poids"><span class="hint">facultatif</span></div>
     </div>
     <h3>Assurance maladie <span class="badge">facultatif — reporté sur l'ordonnance pour le bon de prise en charge</span></h3>
     <div class="grid">
@@ -300,7 +373,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     <div data-show="femme">
       <div class="q"><div class="qt">Grossesse en cours</div>
         <div class="yn" data-p="entretien.grossesse"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
-      <div class="sub" data-show="enceinte"><div class="f inline"><label for="e-sa">Terme actuel</label><input id="e-sa" type="number" min="1" max="42" data-p="entretien.sa" style="width:90px"> <span>semaines d'aménorrhée (SA)</span></div></div>
+      <div class="sub" data-show="enceinte"><div class="f inline"><label for="e-sa">Terme actuel</label><input id="e-sa" type="number" inputmode="numeric" min="1" max="42" data-p="entretien.sa" style="width:90px"> <span>semaines d'aménorrhée (SA)</span></div></div>
       <div class="q" data-show="nonEnceinte"><div class="qt">Projet de grossesse dans le mois à venir<small>Vaccins vivants : éviter une grossesse dans le mois qui suit</small></div>
         <div class="yn" data-p="entretien.projetGrossesse"><button type="button" data-v="1">Oui</button><button type="button" data-v="0">Non</button></div></div>
       <div class="q"><div class="qt">Allaitement</div>
@@ -400,7 +473,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     </div>
     <div id="adm-msg" style="margin-top:10px"></div>
   </div>
-  <div class="card" id="fact-card"><h2>Facturation (rappel)</h2><div id="fact"></div></div>
+  <div class="card" id="fact-card"><h2>Facturation (rappel)</h2><div id="fact" class="tscroll"></div></div>
   <div class="preview" id="att-preview"></div>
   <div class="nav"><button class="btn" data-go="5" type="button">← Ordonnance</button><button class="btn pri" id="btn-new2" type="button">Nouveau patient</button></div>
 </section>
@@ -445,7 +518,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     </div>
     <div class="tpanel" data-tp="ph">
       <p class="lead">Seul un pharmacien formé à la prescription et ayant déclaré cette activité au conseil de l'Ordre (e-POP) peut établir une ordonnance de vaccin.</p>
-      <table class="t" id="ph-table"><thead><tr><th>Nom</th><th>Prénom</th><th>Statut</th><th>N° RPPS</th><th>Formé &amp; déclaré (prescription)</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="tscroll"><table class="t" id="ph-table"><thead><tr><th>Nom</th><th>Prénom</th><th>Statut</th><th>N° RPPS</th><th>Formé &amp; déclaré (prescription)</th><th></th></tr></thead><tbody></tbody></table></div>
       <button class="btn sm" type="button" id="ph-add" style="margin-top:8px">+ Ajouter un pharmacien</button>
     </div>
     <div class="tpanel" data-tp="camp">
@@ -1403,7 +1476,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     return '1 dose — 1 injection par ' + v + (site ? ' (' + site + ')' : (voie === 'SC' ? '' : ' (muscle deltoïde)'));
   }
 
-  root.VP = { D, PRODUITS, ALLERGENES, GROUPES, STATUTS, evaluate, buildContext, prochainRappelDTP, produitsDisponibles, posologie, version: '1.0.0' };
+  root.VP = { D, PRODUITS, ALLERGENES, GROUPES, STATUTS, evaluate, buildContext, prochainRappelDTP, produitsDisponibles, posologie, version: '1.1.0' };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script id="vp-app">
@@ -1528,7 +1601,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
   ];
 
   const sel = (p, opts) => '<select data-p="' + p + '">' + opts.map(o => '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>').join('') + '</select>';
-  const num = (p, max) => '<input type="number" min="0" max="' + (max || 5) + '" data-p="' + p + '" data-type="num">';
+  const num = (p, max) => '<input type="number" inputmode="numeric" min="0" max="' + (max || 5) + '" data-p="' + p + '" data-type="num">';
   const dat = p => '<input type="date" data-p="' + p + '">';
   const fld = (l, ctl, hint, show) => '<div class="f"' + (show ? ' data-show="' + show + '"' : '') + '><label>' + l + '</label>' + ctl + (hint ? '<span class="hint">' + hint + '</span>' : '') + '</div>';
   const cb = (p, l) => '<label class="chk"><input type="checkbox" data-p="' + p + '"> ' + l + '</label>';
@@ -1807,6 +1880,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     const ok = c.every(x => x[0]);
     $('#btn-print-ordo').disabled = !ok;
     $('#ordo-preview').innerHTML = L.length ? docOrdonnance(false) : '<p class="lead" style="text-align:center">Sélectionnez au moins un vaccin à l’étape « Recommandations ».</p>';
+    fitDocs();
   }
 
   /* --------------------------------------------- documents */
@@ -1885,6 +1959,22 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       '<div class="sign"><div>Signature du pharmacien vaccinateur et tampon de la pharmacie</div></div>' +
       '<div class="dfoot"><span>Attestation de vaccination — exemplaire patient</span><span>' + esc(o.nom || '') + ' — Tél. ' + esc(tel33(o.tel)) + '</span></div></section>';
   }
+  /* aperçus A4 mis à l'échelle de la largeur disponible */
+  function fitDocs() {
+    $$('.preview').forEach(pv => {
+      $$(':scope > .doc', pv).forEach(d => { const w = document.createElement('div'); w.className = 'docfit'; d.replaceWith(w); w.appendChild(d); });
+      const cs = getComputedStyle(pv);
+      const avail = pv.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      $$('.docfit', pv).forEach(w => {
+        const d = w.firstElementChild; d.style.transform = '';
+        const dw = d.offsetWidth, dh = d.offsetHeight;
+        const k = Math.min(1, avail / dw);
+        d.style.transform = k < 1 ? 'scale(' + k + ')' : '';
+        w.style.width = Math.floor(dw * k) + 'px'; w.style.height = Math.ceil(dh * k) + 'px';
+      });
+    });
+  }
+  let fitT; window.addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(fitDocs, 120); });
   function printDocs(html) {
     const root = $('#print-root'); root.innerHTML = html;
     setTimeout(() => { window.print(); }, 60);
@@ -1952,6 +2042,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     $('#adm-msg').innerHTML = errs.length ? '<div class="msg alerte">À compléter avant impression : ' + esc(errs.join(', ')) + '.</div>' : '<div class="msg ok">Acte complet : l’attestation peut être imprimée.</div>';
     $('#btn-print-att').disabled = !!errs.length;
     $('#att-preview').innerHTML = docAttestation();
+    fitDocs();
   }
   function renderFact() {
     const L = lines(); const H = SET.honoraires;
@@ -2014,7 +2105,8 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     if (n === 4) { compute(); renderReco(); }
     if (n === 5) { compute(); renderOrdo(); }
     if (n === 6) { compute(); renderAdm(); }
-    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    const cur = $('.step[aria-current="step"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
   function markMissing(on) {
     const miss = new Set(missingEntretien().map(x => x[0]));

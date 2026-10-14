@@ -148,9 +148,30 @@ with sync_playwright() as pw:
     pg.click('#adm-close')
 
     # Mobile
-    m = br.new_page(viewport={'width': 390, 'height': 844})
-    m.goto(url); m.wait_for_selector('#p-nom')
-    m.screenshot(path=os.path.join(OUT, '6-mobile.png'), full_page=True)
+    ctx = br.new_context(viewport={'width': 375, 'height': 812}, is_mobile=True, has_touch=True, device_scale_factor=2)
+    m = ctx.new_page()
+    m.on('pageerror', lambda e: errors.append(str(e)))
+    m.goto(url); m.evaluate("s => localStorage.setItem('vp_settings_v1', JSON.stringify(s))", SETTINGS); m.goto(url); m.wait_for_selector('#p-nom')
+    def no_hscroll(tag):
+        w = m.evaluate("() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]")
+        check(w[0] <= w[1], 'mobile — pas de défilement horizontal (' + tag + ') ' + str(w))
+    small = m.evaluate("() => [...document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea')].filter(e => e.offsetParent).filter(e => parseFloat(getComputedStyle(e).fontSize) < 16).map(e => e.id || e.dataset.p)")
+    check(not small, 'mobile — champs en 16 px minimum (pas de zoom iOS) ' + str(small[:5]))
+    m.fill('#p-nom', 'Dupont'); m.fill('#p-prenom', 'Jeanne'); m.check('input[name=sexe][value=F]'); m.fill('#p-ddn', '1956-03-12')
+    m.screenshot(path=os.path.join(OUT, '6-mobile.png'), full_page=True); no_hscroll('patient')
+    m.click('.step[data-step="2"]')
+    for el in m.query_selector_all('[data-panel="2"] .yn'):
+        if el.is_visible(): el.query_selector('button[data-v="0"]').click()
+    m.screenshot(path=os.path.join(OUT, '7-mobile-entretien.png')); no_hscroll('entretien')
+    m.click('.step[data-step="3"]'); no_hscroll('profil')
+    m.click('.step[data-step="4"]'); m.wait_for_selector('.rc')
+    m.screenshot(path=os.path.join(OUT, '8-mobile-reco.png')); no_hscroll('recommandations')
+    m.click('.step[data-step="5"]'); m.check('#confirm-entretien')
+    m.screenshot(path=os.path.join(OUT, '9-mobile-ordo.png'), full_page=True); no_hscroll('ordonnance')
+    fw = m.evaluate("() => { const f = document.querySelector('#ordo-preview .docfit'); return f ? f.getBoundingClientRect().width : 0 }")
+    check(0 < fw <= 375, 'mobile — aperçu de l\u2019ordonnance ajusté à l\u2019écran (' + str(round(fw)) + ' px)')
+    m.click('#btn-admin'); m.wait_for_selector('#dlg-admin[open]'); m.click('.tab[data-tab="ph"]')
+    m.screenshot(path=os.path.join(OUT, '10-mobile-parametres.png')); no_hscroll('paramètres')
     br.close()
 
 srv.shutdown()
