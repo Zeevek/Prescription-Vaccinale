@@ -140,7 +140,11 @@ with sync_playwright() as pw:
 
     # Scénario 2 : femme enceinte 33 SA
     pg.goto(url); pg.wait_for_selector('#p-nom')
-    pg.fill('#p-nom', 'Leroy'); pg.fill('#p-prenom', 'Inès'); pg.check('input[name=sexe][value=F]'); pg.fill('#p-ddn', '1996-07-02')
+    pg.evaluate("() => document.activeElement && document.activeElement.blur()")
+    pg.keyboard.type('IS01' + '0' * 22 + 'S1296077505612345' + 'S21.2.250.1.213.1.4.8S3INES CLAIRES4LEROYS5FS602-07-1996S775056')
+    pg.keyboard.press('Enter')
+    check(pg.input_value('#p-nom') == 'LEROY' and pg.input_value('#p-prenom') == 'Ines' and pg.input_value('#p-ddn') == '1996-07-02' and pg.is_checked('input[name=sexe][value=F]') and pg.input_value('#p-nir') == '296077505612345', 'Datamatrix INS : identité, sexe, date de naissance et NIR remplis')
+    pg.screenshot(path=os.path.join(OUT, '0-identite-ins.png'))
     pg.click('.step[data-step="2"]')
     for el in pg.query_selector_all('[data-panel="2"] .yn'):
         if el.is_visible():
