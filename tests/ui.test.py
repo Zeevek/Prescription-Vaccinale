@@ -145,26 +145,6 @@ with sync_playwright() as pw:
     pg.keyboard.press('Enter')
     check(pg.input_value('#p-nom') == 'LEROY' and pg.input_value('#p-prenom') == 'Ines' and pg.input_value('#p-ddn') == '1996-07-02' and pg.is_checked('input[name=sexe][value=F]') and pg.input_value('#p-nir') == '296077505612345', 'Datamatrix INS : identité, sexe, date de naissance et NIR remplis')
     pg.screenshot(path=os.path.join(OUT, '0-identite-ins.png'))
-    # Copier-coller depuis le LGO : boutons 📋 par champ et fiche collée avec Ctrl+V
-    pg.context.grant_permissions(['clipboard-read', 'clipboard-write'])
-    pg.on('dialog', lambda d: d.accept())
-    pg.evaluate("() => navigator.clipboard.writeText('  durand-petit ')")
-    pg.click('#p-nomu + .pbtn'); pg.wait_for_timeout(250)
-    check(pg.input_value('#p-nomu') == 'DURAND-PETIT', 'bouton 📋 : nom utilisé collé et mis en majuscules')
-    pg.evaluate("() => navigator.clipboard.writeText('2 96 07 75 056 123 99 NIR')")
-    pg.click('#p-nir + .pbtn'); pg.wait_for_timeout(250)
-    check(pg.input_value('#p-nir') == '296077505612399' and 'invalide' in pg.inner_text('#nir-hint'), 'bouton 📋 : NIR nettoyé, clé erronée signalée')
-    pg.click('#btn-new'); pg.wait_for_timeout(100)
-    fiche = 'INS actif\nMatricule INS\n2770163113005%s NIR\nOID\n1.2.250.1.213.1.4.8\nDate de dernière mise à jour\n13/08/2026\nNom utilisé\n\nNom de naissance *\nMARTIN\n1er prénom de naissance *\nLUCIE\nPrénom(s) de naissance\nLUCIE ANNE\nPrénom utilisé\n\nSexe *\nFéminin\nMasculin\nIndéterminé\nCode lieu de naissance (Code INSEE)\n63113\nDate de naissance *\n15/01/1977' % pg.evaluate("() => GS1.nirCle('2770163113005')")
-    pg.evaluate("() => document.activeElement && document.activeElement.blur()")
-    pg.evaluate("t => { const dt = new DataTransfer(); dt.setData('text/plain', t); document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true })); }", fiche)
-    got = [pg.input_value(x) for x in ['#p-nom', '#p-prenom', '#p-prenoms', '#p-ddn', '#p-lieu', '#p-nir']]
-    check(got == ['MARTIN', 'Lucie', 'LUCIE ANNE', '1977-01-15', '63113', '2770163113005' + pg.evaluate("() => GS1.nirCle('2770163113005')")] and pg.is_checked('input[name=sexe][value=F]') and 'cohérent' in pg.inner_text('#nir-hint'), 'fiche INS collée (Ctrl+V) : tous les champs remplis, sexe déduit du NIR, NIR cohérent ' + str(got))
-    pg.screenshot(path=os.path.join(OUT, '0b-collage-lgo.png'))
-    pg.click('#btn-new')
-    pg.evaluate("() => document.activeElement && document.activeElement.blur()")
-    pg.keyboard.type('IS01' + '0' * 22 + 'S1296077505612345' + 'S21.2.250.1.213.1.4.8S3INES CLAIRES4LEROYS5FS602-07-1996S775056')
-    pg.keyboard.press('Enter')
     pg.click('.step[data-step="2"]')
     for el in pg.query_selector_all('[data-panel="2"] .yn'):
         if el.is_visible():

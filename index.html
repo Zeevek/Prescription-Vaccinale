@@ -177,12 +177,6 @@ table.t{border-collapse:collapse;width:100%;font-size:13.5px}
 table.t th,table.t td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
 .scan-row{display:flex;gap:8px;align-items:stretch}
-.pin{display:flex;gap:6px;align-items:stretch;min-width:0}
-.pin>input{flex:1;min-width:0}
-.pbtn{flex:none;width:40px;border:1px solid var(--line-2);background:var(--surface-2);border-radius:var(--r-sm);cursor:pointer;font-size:16px;padding:0}
-.pbtn:hover{border-color:var(--accent);background:var(--accent-soft)}
-.pbtn.done{background:var(--ok-soft);border-color:#9fd3b6}
-.hint.bad{color:var(--danger)!important}.hint.good{color:var(--ok)!important}
 .scan-row .inp{flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .scan-card{border-color:#b9d9cd;background:linear-gradient(0deg,var(--surface),var(--accent-soft))}
 .scan-ok{color:var(--ok);font-weight:650}
@@ -208,7 +202,6 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
   .f input,.f select,.inp,.top select{min-height:44px}
   .f input[type=checkbox],.f input[type=radio]{min-height:0}
   .btn,.tbtn{min-height:44px}
-  .pbtn{width:46px}
   .btn.sm{min-height:38px}
   .yn button{padding:10px 18px;min-width:64px;font-size:15px}
   .chk{padding:9px 0}
@@ -350,36 +343,31 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       <button class="btn" type="button" id="ins-cam" hidden>📷 Caméra</button>
       <button class="btn" type="button" id="ins-go">Valider</button>
     </div>
-    <div class="row" style="margin-top:8px"><button class="btn" type="button" id="paste-fiche">📋 Coller depuis le LGO</button><span class="hint" style="color:var(--ink-3);font-size:13px">Copiez un champ (ou la fiche INS) dans votre logiciel, puis cliquez ici ou faites Ctrl+V : la donnée est reconnue et rangée dans le bon champ. Chaque champ a aussi son bouton 📋.</span></div>
     <div id="ins-msg"></div>
   </div>
   <div class="card">
     <h2>Identité du patient</h2>
     <div class="grid">
-      <div class="f"><label class="req" for="p-nom">Nom de naissance</label><input id="p-nom" data-p="patient.nom" data-kind="nom" autocomplete="off" style="text-transform:uppercase"></div>
-      <div class="f"><label class="req" for="p-prenom">1er prénom de naissance</label><input id="p-prenom" data-p="patient.prenom" data-kind="prenom" autocomplete="off"></div>
-      <div class="f"><label for="p-prenoms">Prénom(s) de naissance</label><input id="p-prenoms" data-p="patient.prenomsNaissance" data-kind="prenoms" autocomplete="off" style="text-transform:uppercase"></div>
-      <div class="f"><label for="p-nomu">Nom utilisé</label><input id="p-nomu" data-p="patient.nomUtilise" data-kind="nom" autocomplete="off" style="text-transform:uppercase"><span class="hint">si différent du nom de naissance</span></div>
-      <div class="f"><label for="p-prenomu">Prénom utilisé</label><input id="p-prenomu" data-p="patient.prenomUtilise" data-kind="prenom" autocomplete="off"></div>
+      <div class="f"><label class="req" for="p-nom">Nom</label><input id="p-nom" data-p="patient.nom" autocomplete="off" style="text-transform:uppercase"></div>
+      <div class="f"><label class="req" for="p-prenom">Prénom(s)</label><input id="p-prenom" data-p="patient.prenom" autocomplete="off"></div>
       <div class="f"><span class="lab req">Sexe</span>
         <div class="row" role="radiogroup" aria-label="Sexe">
           <label class="chk"><input type="radio" name="sexe" data-p="patient.sexe" value="F"> Féminin</label>
           <label class="chk"><input type="radio" name="sexe" data-p="patient.sexe" value="M"> Masculin</label>
         </div></div>
-      <div class="f"><label class="req" for="p-ddn">Date de naissance</label><input id="p-ddn" type="date" data-p="patient.ddn" data-kind="ddn"><span class="hint" id="p-age"></span></div>
-      <div class="f"><label for="p-lieu">Code lieu de naissance (INSEE)</label><input id="p-lieu" data-p="patient.lieuNaissance" data-kind="insee" autocomplete="off" maxlength="5" style="text-transform:uppercase"></div>
+      <div class="f"><label class="req" for="p-ddn">Date de naissance</label><input id="p-ddn" type="date" data-p="patient.ddn"><span class="hint" id="p-age"></span></div>
       <div class="f"><label for="p-poids">Poids (kg)</label><input id="p-poids" type="number" inputmode="decimal" min="1" max="300" data-p="patient.poids"><span class="hint">facultatif</span></div>
     </div>
     <h3>Assurance maladie <span class="badge">facultatif — reporté sur l'ordonnance pour le bon de prise en charge</span></h3>
     <div class="grid">
-      <div class="f"><label for="p-nir">N° d'immatriculation (NIR / matricule INS)</label><input id="p-nir" data-p="patient.nir" data-kind="nir" inputmode="numeric" autocomplete="off"><span class="hint" id="nir-hint">Celui de l'assuré ouvrant droit (différent pour un ayant droit)</span></div>
-      <div class="f"><label for="p-rang">Rang de naissance</label><input id="p-rang" data-p="patient.rang" data-kind="chiffre" inputmode="numeric" maxlength="1"></div>
-      <div class="f"><label for="p-org">Code organisme</label><input id="p-org" data-p="patient.organisme" data-kind="texte" autocomplete="off"></div>
+      <div class="f"><label for="p-nir">N° d'immatriculation (NIR)</label><input id="p-nir" data-p="patient.nir" inputmode="numeric" autocomplete="off"><span class="hint">Celui de l'assuré ouvrant droit (différent pour un ayant droit)</span></div>
+      <div class="f"><label for="p-rang">Rang de naissance</label><input id="p-rang" data-p="patient.rang" inputmode="numeric" maxlength="1"></div>
+      <div class="f"><label for="p-org">Code organisme</label><input id="p-org" data-p="patient.organisme" autocomplete="off"></div>
     </div>
     <h3>Médecin traitant &amp; transmission</h3>
     <div class="grid">
-      <div class="f"><label for="p-mt">Médecin traitant</label><input id="p-mt" data-p="patient.medecin" data-kind="texte" placeholder="Dr …"></div>
-      <div class="f"><label for="p-mss">Messagerie sécurisée (MSSanté)</label><input id="p-mss" data-p="patient.mss" data-kind="texte" placeholder="…@medecin.mssante.fr"></div>
+      <div class="f"><label for="p-mt">Médecin traitant</label><input id="p-mt" data-p="patient.medecin" placeholder="Dr …"></div>
+      <div class="f"><label for="p-mss">Messagerie sécurisée (MSSanté)</label><input id="p-mss" data-p="patient.mss" placeholder="…@medecin.mssante.fr"></div>
       <div class="f"><label for="p-src">Source des antécédents vaccinaux</label>
         <select id="p-src" data-p="patient.source"><option value="">—</option><option>Carnet de santé / de vaccination</option><option>Mon espace santé (DMP)</option><option>Déclaratif du patient</option><option>Aucune information</option></select></div>
     </div>
@@ -1528,7 +1516,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     return '1 dose — 1 injection par ' + v + (site ? ' (' + site + ')' : (voie === 'SC' ? '' : ' (muscle deltoïde)'));
   }
 
-  root.VP = { D, PRODUITS, ALLERGENES, GROUPES, STATUTS, evaluate, buildContext, prochainRappelDTP, produitsDisponibles, posologie, version: '1.4.0' };
+  root.VP = { D, PRODUITS, ALLERGENES, GROUPES, STATUTS, evaluate, buildContext, prochainRappelDTP, produitsDisponibles, posologie, version: '1.3.0' };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script id="vp-gs1">
@@ -1680,21 +1668,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     return r;
   }
 
-  /* ---------- NIR / matricule INS : extraction et clé (97 − n mod 97 ; 2A → 19, 2B → 18) */
-  function nirCle(n13) {
-    const num = String(n13).toUpperCase().replace(/^(\d{5})2A/, '$119').replace(/^(\d{5})2B/, '$118');
-    if (!/^\d{13}$/.test(num)) return null;
-    return String(97 - Number(BigInt(num) % 97n)).padStart(2, '0');
-  }
-  function nirExtraire(txt) {
-    const t = String(txt || '').toUpperCase().replace(/[\s.\u00a0-]/g, '');
-    const m = /([1-478]\d{4}(?:\d{2}|2A|2B)\d{6})(\d{2})?/.exec(t);
-    if (!m) return null;
-    const n13 = m[1], cle = m[2] || '', attendu = nirCle(n13);
-    return { nir: n13 + cle, n13, cle, valide: !!cle && cle === attendu, cleAttendue: attendu, sexe: /[17]/.test(n13[0]) ? 'M' : /[28]/.test(n13[0]) ? 'F' : '', aa: n13.slice(1, 3), mm: n13.slice(3, 5) };
-  }
-
-  root.GS1 = { parse, normalize, validGtin, gtinCheck, GS, isINS, parseINS, nirCle, nirExtraire };
+  root.GS1 = { parse, normalize, validGtin, gtinCheck, GS, isINS, parseINS };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script id="vp-app">
@@ -1931,7 +1905,6 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     $('#p-age').textContent = a == null ? '' : (a + ' an' + (a > 1 ? 's' : '') + (a < 11 ? (a >= 5 ? ' — seul le vaccin Covid-19 peut être prescrit par le pharmacien' : ' — hors compétence du pharmacien') : ''));
     if (d && d > D.parse(TODAY)) $('#p-age').textContent = 'Date de naissance dans le futur';
     applyShow();
-    verifierNIR();
     compute();
     if (S.step === 4) renderReco();
   }
@@ -2127,13 +2100,9 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       ((o.finess || o.numAM) ? '<br><span class="small">' + (o.finess ? 'FINESS ' + esc(o.finess) : '') + (o.finess && o.numAM ? ' · ' : '') + (o.numAM ? 'N° AM ' + esc(o.numAM) : '') + '</span>' : '') + '</div></div>' +
       '<div class="pr">' + (ph ? '<b>' + esc(ph.prenom) + ' ' + esc((ph.nom || '').toUpperCase()) + '</b><br>Pharmacien' + (ph.statut ? ' ' + esc(ph.statut) : '') + '<br>RPPS ' + esc(ph.rpps) : '<b>Pharmacien</b>') + '</div></div>';
   }
-  function identite(p) {
-    const nom = (p.nom || '').toUpperCase(), nu = (p.nomUtilise || '').toUpperCase(), pr = p.prenom || '', pu = p.prenomUtilise || '';
-    return esc(nom) + (nu && nu !== nom ? ' (nom utilisé : ' + esc(nu) + ')' : '') + ' ' + esc(pr) + (pu && pu.toLowerCase() !== pr.toLowerCase() ? ' (prénom utilisé : ' + esc(pu) + ')' : '');
-  }
   function patientBloc(withAM) {
     const p = S.input.patient; const a = age();
-    let s = '<div class="pat"><b>' + (p.sexe === 'F' ? 'Mme ' : p.sexe === 'M' ? 'M. ' : '') + identite(p) + '</b> — Sexe : ' + (p.sexe === 'F' ? 'féminin' : p.sexe === 'M' ? 'masculin' : '—') +
+    let s = '<div class="pat"><b>' + (p.sexe === 'F' ? 'Mme ' : p.sexe === 'M' ? 'M. ' : '') + esc((p.nom || '').toUpperCase()) + ' ' + esc(p.prenom || '') + '</b> — Sexe : ' + (p.sexe === 'F' ? 'féminin' : p.sexe === 'M' ? 'masculin' : '—') +
       ' — Né(e) le ' + esc(D.fr(p.ddn)) + (a != null ? ' (' + a + ' ans)' : '') + (p.poids ? ' — Poids : ' + esc(p.poids) + ' kg' : '');
     if (withAM && (p.nir || p.rang || p.organisme)) s += '<div class="am">N° d’immatriculation : ' + esc(p.nir || '—') + (p.rang ? ' · Rang de naissance : ' + esc(p.rang) : '') + (p.organisme ? ' · Code organisme : ' + esc(p.organisme) : '') + '</div>';
     return s + '</div>';
@@ -2190,7 +2159,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
         return '<tr><td><b>' + esc(l.p.nom) + '</b><br><span class="small">' + esc(l.it.maladies) + '</span>' + nx + '</td><td>' + esc(l.dose || '—') + '</td><td><b>' + esc(a.lot || '') + '</b></td><td>' + esc(fmtExp(a.peremption)) + '</td><td>' + ((a.voie || l.voie) === 'SC' ? 'SC' : 'IM') + ' — ' + esc(a.site || '') + '</td></tr>'; }).join('') + '</table>';
     const d0 = (S.adm.__date || TODAY), h0 = S.adm.__heure || '';
     return '<section class="doc">' + enTete(ph) + '<h1>ATTESTATION DE VACCINATION</h1><p class="sub1">À conserver par le patient</p>' +
-      '<p><b>' + identite(p) + '</b>, né(e) le ' + esc(D.fr(p.ddn)) + ',<br>a été vacciné(e) le <b>' + D.fr(d0) + '</b>' + (h0 ? ' à ' + esc(h0) : '') +
+      '<p><b>' + esc((p.nom || '').toUpperCase()) + ' ' + esc(p.prenom || '') + '</b>, né(e) le ' + esc(D.fr(p.ddn)) + ',<br>a été vacciné(e) le <b>' + D.fr(d0) + '</b>' + (h0 ? ' à ' + esc(h0) : '') +
       ' par <b>' + (ph ? esc(ph.prenom + ' ' + (ph.nom || '').toUpperCase()) : '') + '</b>, pharmacien' + (ph && ph.rpps ? ' (RPPS ' + esc(ph.rpps) + ')' : '') + ', exerçant à la ' + esc(o.nom || 'pharmacie') + ', ' + esc(o.adresse) + ', ' + esc(o.cp) + ' ' + esc(o.ville) + '.</p>' +
       rows +
       '<div class="box small"><b>Traçabilité :</b> <span class="cb' + (t.dmp ? ' x' : '') + '">Mon espace santé (DMP)</span> &nbsp; <span class="cb' + (t.carnet ? ' x' : '') + '">Carnet de santé / de vaccination</span> &nbsp; <span class="cb' + (t.ordonnancier ? ' x' : '') + '">Ordonnancier de l’officine</span><br>' +
@@ -2395,7 +2364,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
     if (!r.ok) { box.innerHTML = '<div class="msg bloquant" style="margin-top:8px">' + esc(r.erreur) + '</div>'; if (S.step !== 1) { go(1); } return; }
     const P = S.input.patient;
     const dejaSaisi = P.nom && P.nom.toUpperCase() !== r.nom;
-    P.nom = r.nom; P.prenom = titre(r.prenom); P.prenomsNaissance = r.prenoms; P.nomUtilise = P.nomUtilise || '';  if (r.sexe) P.sexe = r.sexe; if (r.ddn) P.ddn = r.ddn;
+    P.nom = r.nom; P.prenom = titre(r.prenom); P.prenomsNaissance = r.prenoms; if (r.sexe) P.sexe = r.sexe; if (r.ddn) P.ddn = r.ddn;
     P.nir = r.ins; P.insOid = r.oid; P.lieuNaissance = r.lieu; P.identiteSource = 'Datamatrix INS';
     writeControls(); onInputChange();
     if (S.step !== 1) go(1);
@@ -2403,134 +2372,6 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
       '<br><span class="small">Nom et prénoms de naissance. Vérifiez l\u2019identité avec le patient (pièce d\u2019identité) ; pour un ayant droit, le NIR de l\u2019assuré ouvrant droit est différent.</span></div>' +
       (dejaSaisi ? '<div class="msg alerte" style="margin-top:6px">Une autre identité était saisie : elle a été remplacée.</div>' : '');
     toast('Identité lue : ' + r.nom + ' ' + P.prenom);
-  }
-  /* --------------------------------------------- copier-coller depuis le LGO */
-  function dateFR(t) {
-    t = String(t || '').trim(); let m;
-    if ((m = /(\d{1,2})[\/\-. ](\d{1,2})[\/\-. ](\d{4})/.exec(t))) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
-    if ((m = /(\d{4})-(\d{2})-(\d{2})/.exec(t))) return m[0];
-    if ((m = /^(\d{2})(\d{2})(\d{4})$/.exec(t.replace(/\s/g, '')))) return m[3] + '-' + m[2] + '-' + m[1];
-    return '';
-  }
-  const NORM = {
-    nom: t => t.replace(/\s+/g, ' ').trim().toUpperCase(),
-    prenom: t => titre(t.replace(/\s+/g, ' ').trim()),
-    prenoms: t => t.replace(/\s+/g, ' ').trim().toUpperCase(),
-    ddn: t => { const d = dateFR(t); return d && D.parse(d) ? d : ''; },
-    nir: t => { const n = window.GS1.nirExtraire(t); return n ? n.nir : t.replace(/\s/g, '').toUpperCase(); },
-    insee: t => t.replace(/\s/g, '').toUpperCase().slice(0, 5),
-    chiffre: t => (t.match(/\d/) || [''])[0],
-    texte: t => t.replace(/\s+/g, ' ').trim()
-  };
-  function poserValeur(el, v) {
-    if (el.type === 'date') el.value = v; else el.value = v;
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    const b = el.parentElement.querySelector('.pbtn'); if (b) { b.classList.add('done'); setTimeout(() => b.classList.remove('done'), 900); }
-  }
-  function collerDans(el, txt) {
-    const kind = el.dataset.kind || 'texte';
-    const v = (NORM[kind] || NORM.texte)(String(txt || ''));
-    if (!v) { toast(kind === 'ddn' ? 'Date non reconnue (attendu JJ/MM/AAAA)' : 'Presse-papiers vide'); return false; }
-    poserValeur(el, v); return true;
-  }
-  function verifierNIR() {
-    const h = $('#nir-hint'); if (!h) return;
-    const P = S.input.patient; const v = P.nir || '';
-    h.className = 'hint';
-    if (!v) { h.textContent = 'Celui de l\u2019assuré ouvrant droit (différent pour un ayant droit)'; return; }
-    const n = window.GS1.nirExtraire(v);
-    if (!n || n.nir.length !== 15) { h.textContent = 'NIR incomplet : 13 caractères + clé de 2 chiffres attendus'; h.classList.add('bad'); return; }
-    if (!n.valide) { h.textContent = 'Clé de contrôle invalide (attendu ' + n.cleAttendue + ') — vérifier la saisie'; h.classList.add('bad'); return; }
-    const d = D.parse(P.ddn); const notes = [];
-    if (P.sexe && n.sexe && n.sexe !== P.sexe) notes.push('sexe');
-    if (d && n.aa !== String(d.getFullYear()).slice(2) ) notes.push('année de naissance');
-    if (d && /^(0[1-9]|1[0-2])$/.test(n.mm) && +n.mm !== d.getMonth() + 1) notes.push('mois de naissance');
-    if (notes.length) { h.textContent = 'Clé valide, mais ' + notes.join(', ') + ' différent(s) de l\u2019identité : NIR de l\u2019assuré ouvrant droit (ayant droit) ?'; h.classList.add('bad'); }
-    else { h.textContent = 'Clé valide — cohérent avec l\u2019identité'; h.classList.add('good'); }
-  }
-  /* fiche entière collée (libellés + valeurs), ou valeur seule reconnue automatiquement */
-  const LIBELLES = [
-    [/matricule\s*ins|n[°o]\s*(d['’]\s*)?immatriculation|\bnir\b|n[°o]\s*(de\s*)?s[ée]curit[ée]\s*sociale/i, 'nir'],
-    [/1\s*(er|ère)?\s*pr[ée]nom\s*de\s*naissance|premier\s*pr[ée]nom/i, 'prenom'],
-    [/pr[ée]nom\(?s?\)?\s*de\s*naissance/i, 'prenomsNaissance'],
-    [/pr[ée]nom\s*utilis[ée]/i, 'prenomUtilise'],
-    [/nom\s*utilis[ée]|nom\s*d['’]usage/i, 'nomUtilise'],
-    [/nom\s*de\s*naissance/i, 'nom'],
-    [/code\s*lieu\s*de\s*naissance|code\s*insee/i, 'lieuNaissance'],
-    [/date\s*de\s*naissance|n[ée]+\s*\(?e?\)?\s*le/i, 'ddn'],
-    [/^\s*sexe/i, 'sexe']
-  ];
-  const KIND_OF = { nir: 'nir', prenom: 'prenom', prenomsNaissance: 'prenoms', prenomUtilise: 'prenom', nomUtilise: 'nom', nom: 'nom', lieuNaissance: 'insee', ddn: 'ddn' };
-  function analyserFiche(txt) {
-    const lignes = String(txt).replace(/\r/g, '').split('\n').map(l => l.replace(/\u00a0/g, ' ').trim());
-    const out = {};
-    for (let i = 0; i < lignes.length; i++) {
-      const l = lignes[i]; if (!l) continue;
-      for (const [re, champ] of LIBELLES) {
-        const m = re.exec(l); if (!m || out[champ] != null) continue;
-        let val = l.slice(m.index + m[0].length).replace(/^[\s:*=\t-]*(\([^)]*\))?[\s:*=\t-]*/, '').trim();
-        if (!val) { let j = i + 1; while (j < lignes.length && !lignes[j]) j++; if (j < lignes.length && (/^\d/.test(lignes[j]) || !LIBELLES.some(([r]) => r.test(lignes[j])))) val = lignes[j]; }
-        if (champ === 'sexe') { const v0 = l.slice(m.index + m[0].length); const f = /f[ée]minin|^\W*F\W*$/i.test(v0), h = /masculin|^\W*M\W*$/i.test(v0); if (f !== h) out.sexe = f ? 'F' : 'M'; }
-        else if (val) out[champ] = NORM[KIND_OF[champ]](val);
-        break;
-      }
-    }
-    return out;
-  }
-  function collerFiche(txt) {
-    txt = String(txt || '');
-    if (!txt.trim()) { toast('Presse-papiers vide'); return; }
-    if (window.GS1.isINS(txt)) return traiterINS(txt);
-    const P = S.input.patient; let f = analyserFiche(txt);
-    if (!Object.keys(f).length) {
-      // valeur seule : NIR ? date ? sinon nom / prénom selon le champ vide
-      const t = txt.trim(); const n = window.GS1.nirExtraire(t);
-      if (n && n.nir.length === 15) f = { nir: n.nir };
-      else if (dateFR(t) && t.length <= 12) f = { ddn: dateFR(t) };
-      else if (/^[A-Za-zÀ-ÿ' -]{1,60}$/.test(t)) f = !P.nom ? { nom: NORM.nom(t) } : !P.prenom ? { prenom: NORM.prenom(t) } : {};
-    }
-    const keys = Object.keys(f).filter(k => f[k]);
-    if (!keys.length) { $('#ins-msg').innerHTML = '<div class="msg alerte" style="margin-top:8px">Contenu du presse-papiers non reconnu. Utilisez le bouton 📋 du champ concerné.</div>'; return; }
-    if (f.prenomsNaissance && !f.prenom) f.prenom = NORM.prenom(f.prenomsNaissance.split(' ')[0]);
-    if (f.nir && !f.sexe && !P.sexe) { const n = window.GS1.nirExtraire(f.nir); if (n && n.sexe) f.sexe = n.sexe; }
-    Object.assign(P, f); P.identiteSource = '';
-    writeControls(); onInputChange();
-    const LAB = { nom: 'nom de naissance', prenom: '1er prénom', prenomsNaissance: 'prénoms de naissance', nomUtilise: 'nom utilisé', prenomUtilise: 'prénom utilisé', ddn: 'date de naissance', sexe: 'sexe', nir: 'NIR', lieuNaissance: 'lieu de naissance' };
-    $('#ins-msg').innerHTML = '<div class="msg ok" style="margin-top:8px">Collé : ' + Object.keys(f).filter(k => f[k]).map(k => LAB[k] || k).join(', ') + '.</div>';
-    toast('Données collées');
-  }
-  async function lirePressePapiers() {
-    if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error('indisponible');
-    return navigator.clipboard.readText();
-  }
-  function bindColler() {
-    // bouton 📋 ajouté à chaque champ d'identité
-    $$('[data-panel="1"] input[data-kind]').forEach(el => {
-      const w = document.createElement('div'); w.className = 'pin'; el.replaceWith(w); w.appendChild(el);
-      const lab = (document.querySelector('label[for="' + el.id + '"]') || {}).textContent || 'ce champ';
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'pbtn'; b.textContent = '📋'; b.title = 'Coller dans « ' + lab + ' »'; b.setAttribute('aria-label', b.title);
-      w.appendChild(b);
-      b.addEventListener('click', async () => {
-        try { const t = await lirePressePapiers(); collerDans(el, t); }
-        catch (e) { el.focus(); toast('Collez avec Ctrl+V dans le champ (accès au presse-papiers refusé)'); }
-      });
-      // Ctrl+V dans le champ : même nettoyage
-      if (el.type !== 'date') el.addEventListener('paste', ev => {
-        const t = (ev.clipboardData || window.clipboardData).getData('text');
-        if (t == null) return; ev.preventDefault(); collerDans(el, t);
-      });
-    });
-    $('#paste-fiche').addEventListener('click', async () => {
-      try { collerFiche(await lirePressePapiers()); }
-      catch (e) { toast('Faites Ctrl+V sur la page pour coller (accès au presse-papiers refusé)'); }
-    });
-    // Ctrl+V à l'étape Patient sans champ actif : analyse automatique
-    document.addEventListener('paste', ev => {
-      if (S.step !== 1) return;
-      const a = document.activeElement;
-      if (a && (/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) || a.isContentEditable)) return;
-      ev.preventDefault(); collerFiche((ev.clipboardData || window.clipboardData).getData('text'));
-    });
   }
   function routerScan(raw) {
     if (window.GS1.isINS(raw)) return traiterINS(raw);
@@ -2732,7 +2573,7 @@ table.t th{background:var(--surface-2);font-weight:650;color:var(--ink-2)}
 
   /* --------------------------------------------- démarrage */
   function init() {
-    buildForms(); bindInputs(); bindReco(); bindAdm(); bindAdmin(); bindScan(); bindColler();
+    buildForms(); bindInputs(); bindReco(); bindAdm(); bindAdmin(); bindScan();
     $$('[data-go]').forEach(b => b.addEventListener('click', () => {
       if (+b.dataset.go === 3 && S.step === 2 && missingEntretien().length) { markMissing(true); toast('Entretien incomplet : questions signalées en rouge'); }
       go(b.dataset.go);

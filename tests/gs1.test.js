@@ -50,15 +50,5 @@ ti('douchette QWERTY sur poste AZERTY', (H + 'S1277010115400329S21.2.250.1.213.1
 ti('incomplet → refus', H + 'S1277010115400329S4DUPONT', { ok: false });
 if (isINS(H + 'S1') && !isINS('01' + GTIN)) { pass++; console.log('✓ INS distingué d\u2019un GS1'); } else { fail++; console.log('✗ isINS'); }
 
-/* ---------- NIR */
-const { nirCle, nirExtraire } = sb.GS1;
-const n13 = '2770163113005', cle = nirCle(n13);
-const okN = (c, m) => { if (c) { pass++; console.log('✓ NIR ' + m); } else { fail++; console.log('✗ NIR ' + m); } };
-okN(cle === String(97 - Number(BigInt(n13) % 97n)).padStart(2, '0'), 'clé calculée');
-const e1 = nirExtraire(n13.replace(/(\d)(\d{2})(\d{2})(\d{2})(\d{3})(\d{3})/, '$1 $2 $3 $4 $5 $6') + ' ' + cle + ' NIR');
-okN(e1 && e1.nir === n13 + cle && e1.valide && e1.sexe === 'F' && e1.aa === '77' && e1.mm === '01', 'extraction avec espaces et suffixe « NIR »');
-okN(!nirExtraire(n13 + String((+cle + 1) % 100).padStart(2, '0')).valide, 'clé erronée détectée');
-const c2a = nirCle('185072A123456'); okN(c2a === String(97 - Number(BigInt('1850719123456') % 97n)).padStart(2, '0'), 'Corse 2A');
-
 console.log('\n' + pass + ' réussis, ' + fail + ' échoués');
 process.exit(fail ? 1 : 0);
